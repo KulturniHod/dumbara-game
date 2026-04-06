@@ -43,10 +43,11 @@
             cursor: pointer;
         }
 
-        .scene.room { background-image: url('https://KulturniHod.github.io/dumbara-game/images/room.jpg'); }
-        .scene.dumbara { background-image: url('https://KulturniHod.github.io/dumbara-game/images/dumbara.png'); background-size: contain; background-color: #2a1a0a; }
-        .scene.diary { background-image: url('https://KulturniHod.github.io/dumbara-game/images/sages_diary.jpg'); }
-        .scene.chest { background-image: url('https://KulturniHod.github.io/dumbara-game/images/chest_open.jpg'); }
+        /* ФОНЫ */
+        .scene.room { background-image: url('https://KulturniHod.github.io/dumbara-game/images/room.jpg'); background-size: cover; }
+        .scene.dumbara { background-image: url('https://KulturniHod.github.io/dumbara-game/images/dumbara.png'); background-size: cover; background-color: #2a1a0a; }
+        .scene.diary { background-image: url('https://KulturniHod.github.io/dumbara-game/images/sages_diary.jpg'); background-size: cover; }
+        .scene.chest { background-image: url('https://KulturniHod.github.io/dumbara-game/images/chest_open.jpg'); background-size: cover; }
         .scene.black { background: #0a0a1a; }
 
         .dialogue-box {
@@ -194,7 +195,7 @@
 </head>
 <body>
     <div class="game-container">
-        <div class="scene black" id="scene">
+        <div class="scene room" id="scene">
             <div class="dialogue-box" id="dialogueBox">
                 <div class="speaker-name" id="speakerName">
                     <span>🎭</span> Вы
@@ -215,7 +216,6 @@
         tg.MainButton.hide();
 
         // ========== СЦЕНАРИЙ ==========
-        let narrativeStep = 0;
         let state = {
             mode: 'narrative', // narrative, tuning, rhythm_selection, rhythm_game, victory
             stringsTuned: [false, false, false],
@@ -303,7 +303,7 @@
         }
 
         function showNarrative() {
-            updateBackground('black');
+            updateBackground('room');
             gamePanelDiv.innerHTML = '';
             progressDiv.style.display = 'none';
             clickHint.style.display = 'block';
@@ -331,10 +331,9 @@
                 dialogueTextSpan.innerHTML = page.text;
                 
                 if (page.action === 'startTuning') {
-                    // После этой страницы начнётся настройка
+                    // После клика начнётся настройка
                 }
             } else {
-                // Начинаем настройку струн
                 startTuningMode();
             }
         }
@@ -349,10 +348,6 @@
                 const page = diaryPage24[currentPage24Index];
                 speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
                 dialogueTextSpan.innerHTML = page.text;
-                
-                if (page.action === 'startRhythmSelection') {
-                    // Будет вызвано после клика
-                }
             }
         }
 
@@ -559,16 +554,14 @@
             currentNarrativeIndex = 0;
             currentDiaryIndex = 0;
             currentPage24Index = 0;
-            narrativeStep = 0;
             
-            updateBackground('black');
+            updateBackground('room');
             showNarrative();
             tg.MainButton.hide();
         }
 
         // Обработка клика по экрану для пролистывания текста
         sceneDiv.addEventListener('click', (e) => {
-            // Если клик не по кнопке
             if (e.target.tagName === 'BUTTON') return;
             
             if (state.mode === 'narrative') {
@@ -580,7 +573,7 @@
                 showDiary();
             }
             else if (state.mode === 'tuning') {
-                // Ничего, режим настройки
+                // Ничего
             }
             else if (state.mode === 'rhythm_selection') {
                 // Ничего
@@ -593,7 +586,14 @@
             }
         });
 
-        // Переопределяем showDiary для кликов
+        // Функция для перехода от дневника к настройке
+        window.handleDiaryAction = function() {
+            if (currentDiaryIndex < diaryPages.length && diaryPages[currentDiaryIndex].action === 'startTuning') {
+                startTuningMode();
+            }
+        };
+
+        // Переопределяем showDiary для отслеживания кликов
         const originalShowDiary = showDiary;
         window.showDiary = function() {
             if (state.mode === 'narrative') {
@@ -603,7 +603,62 @@
             }
         };
 
-        // Старт
+        // Для страницы 24
+        window.handlePage24Action = function() {
+            if (currentPage24Index < diaryPage24.length && diaryPage24[currentPage24Index].action === 'startRhythmSelection') {
+                startRhythmSelection();
+            }
+        };
+
+        // Модифицируем showPage24 для обработки кликов
+        const originalShowPage24 = showPage24;
+        window.showPage24WithAction = function() {
+            originalShowPage24();
+            if (currentPage24Index < diaryPage24.length && diaryPage24[currentPage24Index].action === 'startRhythmSelection') {
+                // Ждём клика
+            }
+        };
+
+        // Добавляем обработку клика для перехода к настройке после дневника
+        sceneDiv.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') return;
+            
+            if (state.mode === 'narrative_diary') {
+                if (currentDiaryIndex < diaryPages.length) {
+                    if (diaryPages[currentDiaryIndex].action === 'startTuning') {
+                        startTuningMode();
+                        currentDiaryIndex++;
+                    } else {
+                        currentDiaryIndex++;
+                        showDiary();
+                    }
+                }
+            }
+            else if (state.mode === 'narrative') {
+                if (currentNarrativeIndex < narrativeScenes.length) {
+                    if (narrativeScenes[currentNarrativeIndex].action === 'showDiary') {
+                        currentNarrativeIndex++;
+                        showDiary();
+                    } else {
+                        currentNarrativeIndex++;
+                        showNarrative();
+                    }
+                }
+            }
+            else if (state.mode === 'diary_page24') {
+                if (currentPage24Index < diaryPage24.length) {
+                    if (diaryPage24[currentPage24Index].action === 'startRhythmSelection') {
+                        startRhythmSelection();
+                        currentPage24Index++;
+                    } else {
+                        currentPage24Index++;
+                        showPage24();
+                    }
+                }
+            }
+        });
+
+        // Запуск
         showNarrative();
         tg.ready();
     </script>
