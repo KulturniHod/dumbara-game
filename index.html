@@ -43,7 +43,6 @@
             cursor: pointer;
         }
 
-        /* ФОНЫ */
         .scene.room { background-image: url('https://KulturniHod.github.io/dumbara-game/images/room.jpg'); background-size: cover; }
         .scene.dumbara { background-image: url('https://KulturniHod.github.io/dumbara-game/images/dumbara.png'); background-size: cover; background-color: #2a1a0a; }
         .scene.diary { background-image: url('https://KulturniHod.github.io/dumbara-game/images/sages_diary.jpg'); background-size: cover; }
@@ -173,18 +172,6 @@
             font-size: 14px;
         }
 
-        .chest-icon {
-            text-align: center;
-            font-size: 60px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            transition: transform 0.3s;
-        }
-
-        .chest-icon:hover {
-            transform: scale(1.1);
-        }
-
         .click-hint {
             text-align: center;
             margin-top: 10px;
@@ -215,7 +202,7 @@
         tg.expand();
         tg.MainButton.hide();
 
-        // ========== СЦЕНАРИЙ ==========
+        // ========== СОСТОЯНИЕ ==========
         let state = {
             mode: 'narrative', // narrative, tuning, rhythm_selection, rhythm_game, victory
             stringsTuned: [false, false, false],
@@ -227,67 +214,31 @@
 
         const correctStringValues = [20, 80, 50];
 
-        // Сцены повествования (по клику на экран)
-        const narrativeScenes = [
-            {
-                speaker: 'Вы',
-                icon: '🎭',
-                text: 'Исследуя старинный дом, я натыкаюсь на пыльный, забытый угол...'
-            },
-            {
-                speaker: 'Вы',
-                icon: '🎭',
-                text: 'Передо мной — огромный деревянный сундук. Он закрывает вход в подвал.'
-            },
-            {
-                speaker: 'Вы',
-                icon: '🎭',
-                text: 'На крышке выгравирована странная думбыра. Внутри — старый инструмент и потрёпанный дневник.'
-            },
-            {
-                speaker: 'Вы',
-                icon: '🎭',
-                text: 'Дневник принадлежал сэсэну — сказителю, который играл на этой думбыре более 20 лет назад...',
-                action: 'showDiary'
-            }
+        // ========== СЦЕНАРИЙ ==========
+        // Пролог (фон room.jpg)
+        const prologueScenes = [
+            { speaker: 'Вы', icon: '🎭', text: 'Исследуя старинный дом, я натыкаюсь на пыльный, забытый угол...' },
+            { speaker: 'Вы', icon: '🎭', text: 'Передо мной — огромный деревянный сундук. Он закрывает вход в подвал.' },
+            { speaker: 'Вы', icon: '🎭', text: 'На крышке выгравирована странная думбыра. Внутри — старый инструмент и потрёпанный дневник.' },
+            { speaker: 'Вы', icon: '🎭', text: 'Дневник принадлежал сэсэну — сказителю, который играл на этой думбыре более 20 лет назад...' }
         ];
 
+        // Страницы дневника (фон diary.jpg)
         const diaryPages = [
-            {
-                speaker: '📖 Страница 12',
-                icon: '📖',
-                text: '«Думбыра — не просто инструмент. У неё три струны:<br><br>• Первая — голос батыра (мужество)<br>• Вторая — голос коня (путь)<br>• Третья — голос ветра (судьба)<br><br>Если хоть одна струна молчит или врёт — думбыра не заговорит.»'
-            },
-            {
-                speaker: '📖 Страница 17',
-                icon: '📖',
-                text: '«Первая струна — звук удара копыта о землю (низкий, упругий).<br><br>Вторая — свист стрелы в полёте (высокий, звонкий).<br><br>Третья — шелест знамени на ветру (средний, певучий).»'
-            },
-            {
-                speaker: '📖 Страница 17 (продолжение)',
-                icon: '📖',
-                text: '«Мой учитель говорил:<br><br>"Не пальцы играют — сердце сказителя струны ведёт. Но если не знаешь хамаҡа, даже настроенная думбыра молчит".»',
-                action: 'startTuning'
-            }
+            { speaker: '📖 Страница 12', icon: '📖', text: '«Думбыра — не просто инструмент. У неё три струны:<br><br>• Первая — голос батыра (мужество)<br>• Вторая — голос коня (путь)<br>• Третья — голос ветра (судьба)<br><br>Если хоть одна струна молчит или врёт — думбыра не заговорит.»' },
+            { speaker: '📖 Страница 17', icon: '📖', text: '«Первая струна — звук удара копыта о землю (низкий, упругий).<br><br>Вторая — свист стрелы в полёте (высокий, звонкий).<br><br>Третья — шелест знамени на ветру (средний, певучий).»' },
+            { speaker: '📖 Страница 17', icon: '📖', text: '«Мой учитель говорил:<br><br>"Не пальцы играют — сердце сказителя струны ведёт. Но если не знаешь хамаҡа, даже настроенная думбыра молчит".»' }
         ];
 
-        const diaryPage24 = [
-            {
-                speaker: '📖 Страница 24',
-                icon: '📖',
-                text: '«Думбыра заговорила. Но ларец всё ещё закрыт. Значит, нужен правильный хамаҡ. Я записал три напева.»'
-            },
-            {
-                speaker: '📖 Поле дневника',
-                icon: '📖',
-                text: '«Тот, кто сделал этот ларец, был сэсэном, который скучает по сыну, ушедшему в дальний поход. Он играл один напев каждый вечер, глядя на восток. Я записал, но не могу вспомнить, какой именно...»',
-                action: 'startRhythmSelection'
-            }
+        // Страница 24 после настройки струн
+        const page24Pages = [
+            { speaker: '📖 Страница 24', icon: '📖', text: '«Думбыра заговорила. Но ларец всё ещё закрыт. Значит, нужен правильный хамаҡ. Я записал три напева.»' },
+            { speaker: '📖 Поле дневника', icon: '📖', text: '«Тот, кто сделал этот ларец, был сэсэном, который скучает по сыну, ушедшему в дальний поход. Он играл один напев каждый вечер, глядя на восток. Я записал, но не могу вспомнить, какой именно...»' }
         ];
 
-        let currentNarrativeIndex = 0;
-        let currentDiaryIndex = 0;
-        let currentPage24Index = 0;
+        let prologueIndex = 0;
+        let diaryIndex = 0;
+        let page24Index = 0;
 
         // UI элементы
         const sceneDiv = document.getElementById('scene');
@@ -297,63 +248,63 @@
         const progressDiv = document.getElementById('progress');
         const clickHint = document.getElementById('clickHint');
 
-        function updateBackground(bgType) {
+        function setBackground(bgClass) {
             sceneDiv.classList.remove('room', 'dumbara', 'diary', 'chest', 'black');
-            sceneDiv.classList.add(bgType);
+            sceneDiv.classList.add(bgClass);
         }
 
-        function showNarrative() {
-            updateBackground('room');
+        function showPrologue() {
+            setBackground('room');
             gamePanelDiv.innerHTML = '';
             progressDiv.style.display = 'none';
             clickHint.style.display = 'block';
             
-            if (currentNarrativeIndex < narrativeScenes.length) {
-                const scene = narrativeScenes[currentNarrativeIndex];
+            if (prologueIndex < prologueScenes.length) {
+                const scene = prologueScenes[prologueIndex];
                 speakerNameSpan.innerHTML = `<span>${scene.icon}</span> ${scene.speaker}`;
                 dialogueTextSpan.innerHTML = scene.text;
             } else {
-                // Переход к дневнику
-                currentDiaryIndex = 0;
+                // Пролог закончен → показываем дневник
+                diaryIndex = 0;
                 showDiary();
             }
         }
 
         function showDiary() {
-            updateBackground('diary');
+            setBackground('diary');
             gamePanelDiv.innerHTML = '';
             progressDiv.style.display = 'none';
             clickHint.style.display = 'block';
             
-            if (currentDiaryIndex < diaryPages.length) {
-                const page = diaryPages[currentDiaryIndex];
+            if (diaryIndex < diaryPages.length) {
+                const page = diaryPages[diaryIndex];
                 speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
                 dialogueTextSpan.innerHTML = page.text;
-                
-                if (page.action === 'startTuning') {
-                    // После клика начнётся настройка
-                }
             } else {
+                // Дневник прочитан → начинаем настройку
                 startTuningMode();
             }
         }
 
         function showPage24() {
-            updateBackground('diary');
+            setBackground('diary');
             gamePanelDiv.innerHTML = '';
             progressDiv.style.display = 'none';
             clickHint.style.display = 'block';
             
-            if (currentPage24Index < diaryPage24.length) {
-                const page = diaryPage24[currentPage24Index];
+            if (page24Index < page24Pages.length) {
+                const page = page24Pages[page24Index];
                 speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
                 dialogueTextSpan.innerHTML = page.text;
+            } else {
+                // Страница 24 прочитана → выбор хамака
+                startRhythmSelection();
             }
         }
 
         function startTuningMode() {
             state.mode = 'tuning';
-            updateBackground('dumbara');
+            setBackground('dumbara');
             clickHint.style.display = 'none';
             progressDiv.style.display = 'block';
             
@@ -405,7 +356,7 @@
 
         function finishTuning() {
             if (state.stringsTuned.every(v => v === true)) {
-                currentPage24Index = 0;
+                page24Index = 0;
                 showPage24();
             } else {
                 tg.showAlert('Настрой все три струны! Ориентируйся на описания тона.');
@@ -414,7 +365,7 @@
 
         function startRhythmSelection() {
             state.mode = 'rhythm_selection';
-            updateBackground('diary');
+            setBackground('diary');
             clickHint.style.display = 'none';
             
             speakerNameSpan.innerHTML = `<span>🎵</span> Выбор хамака`;
@@ -442,7 +393,7 @@
                 state.rhythmPos = 0;
                 state.mode = 'rhythm_game';
                 
-                updateBackground('dumbara');
+                setBackground('dumbara');
                 let name = choice === 'batyr' ? 'Хамақ батыра' : (choice === 'yuly' ? 'Хамақ юлы' : 'Хамақ еле');
                 speakerNameSpan.innerHTML = `<span>🎵</span> Игра на думбыре`;
                 dialogueTextSpan.innerHTML = `Выбран ${name}. Сыграй мелодию в правильном ритме!`;
@@ -527,7 +478,7 @@
 
         function victory() {
             state.mode = 'victory';
-            updateBackground('chest');
+            setBackground('chest');
             speakerNameSpan.innerHTML = `<span>🏆</span> Победа!`;
             dialogueTextSpan.innerHTML = 'Сундук сдвигается! Под ним открывается проход в подвал. Ты справился с загадкой думбыры!';
             gamePanelDiv.innerHTML = `<div class="game-panel"><button class="game-button" onclick="resetGame()">🎮 Играть заново</button></div>`;
@@ -551,115 +502,67 @@
                 rhythmSequence: [],
                 rhythmPos: 0
             };
-            currentNarrativeIndex = 0;
-            currentDiaryIndex = 0;
-            currentPage24Index = 0;
+            prologueIndex = 0;
+            diaryIndex = 0;
+            page24Index = 0;
             
-            updateBackground('room');
-            showNarrative();
+            setBackground('room');
+            showPrologue();
             tg.MainButton.hide();
         }
 
-        // Обработка клика по экрану для пролистывания текста
+        // ========== ОБРАБОТКА КЛИКОВ ПО ЭКРАНУ ==========
         sceneDiv.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') return;
             
+            // Режим повествования (пролог)
             if (state.mode === 'narrative') {
-                currentNarrativeIndex++;
-                showNarrative();
-            } 
-            else if (state.mode === 'narrative_diary') {
-                currentDiaryIndex++;
-                showDiary();
+                prologueIndex++;
+                showPrologue();
             }
-            else if (state.mode === 'tuning') {
-                // Ничего
-            }
-            else if (state.mode === 'rhythm_selection') {
-                // Ничего
-            }
-            else if (state.mode === 'rhythm_game') {
-                // Ничего
-            }
-            else if (state.mode === 'victory') {
-                // Ничего
+            // Режим чтения дневника
+            else if (state.mode === 'narrative' && prologueIndex >= prologueScenes.length) {
+                // Переключилось на дневник автоматически
             }
         });
 
-        // Функция для перехода от дневника к настройке
-        window.handleDiaryAction = function() {
-            if (currentDiaryIndex < diaryPages.length && diaryPages[currentDiaryIndex].action === 'startTuning') {
-                startTuningMode();
+        // Дополнительный обработчик для навигации по дневнику
+        function handleGlobalClick() {
+            // Если мы в режиме просмотра дневника (без активных кнопок)
+            if (sceneDiv.classList.contains('diary') && state.mode === 'narrative') {
+                if (diaryIndex < diaryPages.length) {
+                    diaryIndex++;
+                    showDiary();
+                }
             }
-        };
+        }
 
-        // Переопределяем showDiary для отслеживания кликов
-        const originalShowDiary = showDiary;
-        window.showDiary = function() {
-            if (state.mode === 'narrative') {
-                state.mode = 'narrative_diary';
-                currentDiaryIndex = 0;
-                originalShowDiary();
-            }
-        };
+        // Переопределяем showPrologue для корректной навигации
+        const originalShowPrologue = showPrologue;
+        window.showPrologue = originalShowPrologue;
 
-        // Для страницы 24
-        window.handlePage24Action = function() {
-            if (currentPage24Index < diaryPage24.length && diaryPage24[currentPage24Index].action === 'startRhythmSelection') {
-                startRhythmSelection();
-            }
-        };
-
-        // Модифицируем showPage24 для обработки кликов
-        const originalShowPage24 = showPage24;
-        window.showPage24WithAction = function() {
-            originalShowPage24();
-            if (currentPage24Index < diaryPage24.length && diaryPage24[currentPage24Index].action === 'startRhythmSelection') {
-                // Ждём клика
-            }
-        };
-
-        // Добавляем обработку клика для перехода к настройке после дневника
-        sceneDiv.addEventListener('click', function(e) {
+        // Обработка клика для дневника
+        document.addEventListener('click', function(e) {
             if (e.target.tagName === 'BUTTON') return;
             
-            if (state.mode === 'narrative_diary') {
-                if (currentDiaryIndex < diaryPages.length) {
-                    if (diaryPages[currentDiaryIndex].action === 'startTuning') {
-                        startTuningMode();
-                        currentDiaryIndex++;
-                    } else {
-                        currentDiaryIndex++;
-                        showDiary();
-                    }
+            // Если фон дневника и режим narrative (чтение)
+            if (sceneDiv.classList.contains('diary') && state.mode === 'narrative') {
+                if (diaryIndex < diaryPages.length) {
+                    diaryIndex++;
+                    showDiary();
                 }
             }
-            else if (state.mode === 'narrative') {
-                if (currentNarrativeIndex < narrativeScenes.length) {
-                    if (narrativeScenes[currentNarrativeIndex].action === 'showDiary') {
-                        currentNarrativeIndex++;
-                        showDiary();
-                    } else {
-                        currentNarrativeIndex++;
-                        showNarrative();
-                    }
-                }
-            }
-            else if (state.mode === 'diary_page24') {
-                if (currentPage24Index < diaryPage24.length) {
-                    if (diaryPage24[currentPage24Index].action === 'startRhythmSelection') {
-                        startRhythmSelection();
-                        currentPage24Index++;
-                    } else {
-                        currentPage24Index++;
-                        showPage24();
-                    }
+            // Если страница 24
+            else if (sceneDiv.classList.contains('diary') && page24Index < page24Pages.length && state.mode === 'narrative') {
+                if (page24Index < page24Pages.length) {
+                    page24Index++;
+                    showPage24();
                 }
             }
         });
 
-        // Запуск
-        showNarrative();
+        // Старт игры
+        showPrologue();
         tg.ready();
     </script>
 </body>
