@@ -76,6 +76,7 @@
         .dialogue-text {
             font-size: 16px;
             line-height: 1.5;
+            white-space: pre-line;
         }
 
         .game-panel {
@@ -211,7 +212,7 @@
         tg.expand();
         tg.MainButton.hide();
 
-        // ========== АУДИО (синтез через Web Audio API) ==========
+        // ========== АУДИО ==========
         let audioContext = null;
         
         function initAudio() {
@@ -247,12 +248,10 @@
         }
         
         function playCorrectSound() {
-            // Чистый, приятный звук (ля первой октавы)
-            playTone(440, 0.8, 'sine');
+            playTone(440, 0.6, 'sine');
         }
         
         function playWrongSound() {
-            // Фальшивый, неприятный звук (расстроенное сочетание)
             const ctx = initAudio();
             const oscillator1 = ctx.createOscillator();
             const oscillator2 = ctx.createOscillator();
@@ -262,8 +261,8 @@
             oscillator2.connect(gainNode);
             gainNode.connect(ctx.destination);
             
-            oscillator1.frequency.value = 415; // соль-диез (расстроено)
-            oscillator2.frequency.value = 466; // си-бемоль (расстроено)
+            oscillator1.frequency.value = 415;
+            oscillator2.frequency.value = 466;
             oscillator1.type = 'sawtooth';
             oscillator2.type = 'sawtooth';
             
@@ -271,9 +270,9 @@
             
             oscillator1.start();
             oscillator2.start();
-            gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.6);
-            oscillator1.stop(ctx.currentTime + 0.6);
-            oscillator2.stop(ctx.currentTime + 0.6);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+            oscillator1.stop(ctx.currentTime + 0.5);
+            oscillator2.stop(ctx.currentTime + 0.5);
         }
 
         // ========== СОСТОЯНИЕ ==========
@@ -310,6 +309,7 @@
         let prologueIndex = 0;
         let diaryIndex = 0;
         let page24Index = 0;
+        let isPage24Active = false;
 
         const sceneDiv = document.getElementById('scene');
         const speakerNameSpan = document.getElementById('speakerName');
@@ -359,12 +359,14 @@
             gamePanelDiv.innerHTML = '';
             progressDiv.style.display = 'none';
             clickHint.style.display = 'block';
+            isPage24Active = true;
             
             if (page24Index < page24Pages.length) {
                 const page = page24Pages[page24Index];
                 speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
                 dialogueTextSpan.innerHTML = page.text;
             } else {
+                isPage24Active = false;
                 startRhythmSelection();
             }
         }
@@ -391,7 +393,7 @@
                         <div class="string-line ${tunedClass}" id="string-${i}"></div>
                         <input type="range" class="slider" id="slider-${i}" min="0" max="100" value="${state.stringValues[i]}">
                         <div style="font-size:12px; color:#ccc;">
-                            ${i === 0 ? 'низкий, упругий (20%)' : i === 1 ? 'высокий, звонкий (80%)' : 'средний, певучий (50%)'}
+                            ${i === 0 ? 'низкий, упругий' : i === 1 ? 'высокий, звонкий' : 'средний, певучий'}
                         </div>
                     </div>
                 `;
@@ -405,13 +407,11 @@
                     slider.addEventListener('input', (function(idx) {
                         return function(e) {
                             const val = parseInt(e.target.value);
-                            const oldVal = state.stringValues[idx];
                             state.stringValues[idx] = val;
                             const diff = Math.abs(val - correctStringValues[idx]);
                             const wasTuned = state.stringsTuned[idx];
                             state.stringsTuned[idx] = diff <= 15;
                             
-                            // Воспроизводим звук при изменении
                             if (state.stringsTuned[idx]) {
                                 playCorrectSound();
                             } else {
@@ -421,6 +421,15 @@
                             const stringLine = document.getElementById(`string-${idx}`);
                             if (state.stringsTuned[idx]) stringLine.classList.add('string-tuned');
                             else stringLine.classList.remove('string-tuned');
+                            
+                            // Обновляем отображение процентов
+                            const stringRow = slider.closest('.string-row');
+                            if (stringRow) {
+                                const strongElem = stringRow.querySelector('strong');
+                                if (strongElem) {
+                                    strongElem.innerHTML = `Струна ${idx+1} (${val}%)`;
+                                }
+                            }
                             
                             const tunedCount = state.stringsTuned.filter(Boolean).length;
                             progressDiv.innerHTML = `Струн настроено: ${tunedCount}/3`;
@@ -435,6 +444,7 @@
         function finishTuning() {
             if (state.stringsTuned.every(v => v === true)) {
                 page24Index = 0;
+                isPage24Active = true;
                 showPage24();
             } else {
                 tg.showAlert('Настрой все три струны! Ориентируйся на описания тона.');
@@ -513,6 +523,7 @@
             const expected = state.rhythmSequence[state.rhythmPos];
             
             if (expected === -1) {
+                playCorrectSound();
                 state.rhythmPos++;
                 if (state.rhythmPos >= state.rhythmSequence.length) {
                     victory();
@@ -587,34 +598,31 @@
             prologueIndex = 0;
             diaryIndex = 0;
             page24Index = 0;
+            isPage24Active = false;
             
             setBackground('room');
             showPrologue();
             tg.MainButton.hide();
         }
 
-        // Обработка кликов
+        // ========== ОБРАБОТКА КЛИКОВ ==========
         sceneDiv.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') return;
             
-            if (state.mode === 'narrative') {
-                if (sceneDiv.classList.contains('diary')) {
-                    if (diaryIndex < diaryPages.length) {
-                        diaryIndex++;
-                        showDiary();
-                    }
-                } else if (sceneDiv.classList.contains('room')) {
-                    prologueIndex++;
-                    showPrologue();
+            // Режим пролога
+            if (state.mode === 'narrative' && sceneDiv.classList.contains('room')) {
+                prologueIndex++;
+                showPrologue();
+            }
+            // Режим дневника (первые страницы)
+            else if (state.mode === 'narrative' && sceneDiv.classList.contains('diary') && !isPage24Active) {
+                if (diaryIndex < diaryPages.length) {
+                    diaryIndex++;
+                    showDiary();
                 }
             }
-        });
-
-        // Дополнительный обработчик для страницы 24
-        document.addEventListener('click', function(e) {
-            if (e.target.tagName === 'BUTTON') return;
-            
-            if (sceneDiv.classList.contains('diary') && state.mode === 'narrative' && page24Index < page24Pages.length && diaryIndex >= diaryPages.length) {
+            // Режим страницы 24
+            else if (isPage24Active && sceneDiv.classList.contains('diary')) {
                 page24Index++;
                 showPage24();
             }
