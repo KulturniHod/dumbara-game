@@ -10,12 +10,14 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
         }
 
         body {
             font-family: 'Georgia', 'Segoe UI', serif;
             min-height: 100vh;
             background: #0a0a1a;
+            overflow: hidden;
         }
 
         .game-container {
@@ -23,7 +25,8 @@
             width: 100%;
             max-width: 500px;
             margin: 0 auto;
-            min-height: 100vh;
+            height: 100vh;
+            overflow-y: auto;
         }
 
         .scene {
@@ -37,25 +40,17 @@
             flex-direction: column;
             justify-content: flex-end;
             padding: 20px;
+            cursor: pointer;
         }
 
-        .scene.room {
-            background-image: url('https://KulturniHod.github.io/dumbara-game/images/room.jpg');
-        }
-        .scene.dumbara {
-            background-image: url('https://KulturniHod.github.io/dumbara-game/images/dumbara.png');
-            background-size: contain;
-            background-color: #2a1a0a;
-        }
-        .scene.diary {
-            background-image: url('https://KulturniHod.github.io/dumbara-game/images/sages_diary.jpg');
-        }
-        .scene.chest {
-            background-image: url('https://KulturniHod.github.io/dumbara-game/images/chest_open.jpg');
-        }
+        .scene.room { background-image: url('https://KulturniHod.github.io/dumbara-game/images/room.jpg'); }
+        .scene.dumbara { background-image: url('https://KulturniHod.github.io/dumbara-game/images/dumbara.png'); background-size: contain; background-color: #2a1a0a; }
+        .scene.diary { background-image: url('https://KulturniHod.github.io/dumbara-game/images/sages_diary.jpg'); }
+        .scene.chest { background-image: url('https://KulturniHod.github.io/dumbara-game/images/chest_open.jpg'); }
+        .scene.black { background: #0a0a1a; }
 
         .dialogue-box {
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(12px);
             border-radius: 24px;
             padding: 20px;
@@ -139,7 +134,6 @@
             width: 100%;
         }
 
-        /* Сетка для кнопок струн + пауза */
         .rhythm-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -190,41 +184,28 @@
             transform: scale(1.1);
         }
 
-        .choice-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
-        }
-
-        .choice-btn {
-            background: rgba(212, 175, 55, 0.15);
-            border: 1px solid #d4af37;
-            color: #d4af37;
-            text-align: left;
-            padding: 12px 16px;
+        .click-hint {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div class="scene room" id="scene">
-            <div class="chest-icon" id="chestIcon">📦</div>
-
+        <div class="scene black" id="scene">
             <div class="dialogue-box" id="dialogueBox">
                 <div class="speaker-name" id="speakerName">
-                    <span>📖</span> Дневник сэсэна
+                    <span>🎭</span> Вы
                 </div>
                 <div class="dialogue-text" id="dialogueText">
-                    «Думбыра — не просто инструмент. У неё три струны:<br>
-                    1 — голос батыра (мужество) — низкий, упругий<br>
-                    2 — голос коня (путь) — высокий, звонкий<br>
-                    3 — голос ветра (судьба) — средний, певучий»
+                    Загрузка...
                 </div>
             </div>
-
+            <div class="click-hint" id="clickHint">▼ Нажмите на экран, чтобы продолжить ▼</div>
             <div id="gamePanel"></div>
-            <div class="progress" id="progress">🎵 Струн настроено: 0/3</div>
+            <div class="progress" id="progress" style="display:none;"></div>
         </div>
     </div>
 
@@ -233,8 +214,10 @@
         tg.expand();
         tg.MainButton.hide();
 
+        // ========== СЦЕНАРИЙ ==========
+        let narrativeStep = 0;
         let state = {
-            step: 'start',
+            mode: 'narrative', // narrative, tuning, rhythm_selection, rhythm_game, victory
             stringsTuned: [false, false, false],
             stringValues: [50, 50, 50],
             correctRhythm: ['batyr', 'yuly', 'ele'][Math.floor(Math.random() * 3)],
@@ -244,148 +227,213 @@
 
         const correctStringValues = [20, 80, 50];
 
-        function updateBackground() {
-            const sceneDiv = document.getElementById('scene');
-            sceneDiv.classList.remove('room', 'dumbara', 'diary', 'chest');
+        // Сцены повествования (по клику на экран)
+        const narrativeScenes = [
+            {
+                speaker: 'Вы',
+                icon: '🎭',
+                text: 'Исследуя старинный дом, я натыкаюсь на пыльный, забытый угол...'
+            },
+            {
+                speaker: 'Вы',
+                icon: '🎭',
+                text: 'Передо мной — огромный деревянный сундук. Он закрывает вход в подвал.'
+            },
+            {
+                speaker: 'Вы',
+                icon: '🎭',
+                text: 'На крышке выгравирована странная думбыра. Внутри — старый инструмент и потрёпанный дневник.'
+            },
+            {
+                speaker: 'Вы',
+                icon: '🎭',
+                text: 'Дневник принадлежал сэсэну — сказителю, который играл на этой думбыре более 20 лет назад...',
+                action: 'showDiary'
+            }
+        ];
+
+        const diaryPages = [
+            {
+                speaker: '📖 Страница 12',
+                icon: '📖',
+                text: '«Думбыра — не просто инструмент. У неё три струны:<br><br>• Первая — голос батыра (мужество)<br>• Вторая — голос коня (путь)<br>• Третья — голос ветра (судьба)<br><br>Если хоть одна струна молчит или врёт — думбыра не заговорит.»'
+            },
+            {
+                speaker: '📖 Страница 17',
+                icon: '📖',
+                text: '«Первая струна — звук удара копыта о землю (низкий, упругий).<br><br>Вторая — свист стрелы в полёте (высокий, звонкий).<br><br>Третья — шелест знамени на ветру (средний, певучий).»'
+            },
+            {
+                speaker: '📖 Страница 17 (продолжение)',
+                icon: '📖',
+                text: '«Мой учитель говорил:<br><br>"Не пальцы играют — сердце сказителя струны ведёт. Но если не знаешь хамаҡа, даже настроенная думбыра молчит".»',
+                action: 'startTuning'
+            }
+        ];
+
+        const diaryPage24 = [
+            {
+                speaker: '📖 Страница 24',
+                icon: '📖',
+                text: '«Думбыра заговорила. Но ларец всё ещё закрыт. Значит, нужен правильный хамаҡ. Я записал три напева.»'
+            },
+            {
+                speaker: '📖 Поле дневника',
+                icon: '📖',
+                text: '«Тот, кто сделал этот ларец, был сэсэном, который скучает по сыну, ушедшему в дальний поход. Он играл один напев каждый вечер, глядя на восток. Я записал, но не могу вспомнить, какой именно...»',
+                action: 'startRhythmSelection'
+            }
+        ];
+
+        let currentNarrativeIndex = 0;
+        let currentDiaryIndex = 0;
+        let currentPage24Index = 0;
+
+        // UI элементы
+        const sceneDiv = document.getElementById('scene');
+        const speakerNameSpan = document.getElementById('speakerName');
+        const dialogueTextSpan = document.getElementById('dialogueText');
+        const gamePanelDiv = document.getElementById('gamePanel');
+        const progressDiv = document.getElementById('progress');
+        const clickHint = document.getElementById('clickHint');
+
+        function updateBackground(bgType) {
+            sceneDiv.classList.remove('room', 'dumbara', 'diary', 'chest', 'black');
+            sceneDiv.classList.add(bgType);
+        }
+
+        function showNarrative() {
+            updateBackground('black');
+            gamePanelDiv.innerHTML = '';
+            progressDiv.style.display = 'none';
+            clickHint.style.display = 'block';
             
-            if (state.step === 'start') sceneDiv.classList.add('room');
-            else if (state.step === 'tuning') sceneDiv.classList.add('dumbara');
-            else if (state.step === 'rhythm') sceneDiv.classList.add('diary');
-            else if (state.step === 'playing') sceneDiv.classList.add('dumbara');
-            else if (state.step === 'victory') {
-                sceneDiv.classList.add('chest');
-                document.getElementById('chestIcon').style.display = 'none';
+            if (currentNarrativeIndex < narrativeScenes.length) {
+                const scene = narrativeScenes[currentNarrativeIndex];
+                speakerNameSpan.innerHTML = `<span>${scene.icon}</span> ${scene.speaker}`;
+                dialogueTextSpan.innerHTML = scene.text;
+            } else {
+                // Переход к дневнику
+                currentDiaryIndex = 0;
+                showDiary();
             }
         }
 
-        function updateDialogue(speaker, text, icon = '📖') {
-            document.getElementById('speakerName').innerHTML = `<span>${icon}</span> ${speaker}`;
-            document.getElementById('dialogueText').innerHTML = text;
-        }
-
-        function render() {
-            const panel = document.getElementById('gamePanel');
-            const progress = document.getElementById('progress');
-            const tunedCount = state.stringsTuned.filter(Boolean).length;
-            progress.innerHTML = `🎵 Струн настроено: ${tunedCount}/3`;
-            updateBackground();
-
-            if (state.step === 'start') {
-                panel.innerHTML = `<button class="game-button" onclick="startTuning()">🎸 Настроить думбыру</button>`;
-            }
-            else if (state.step === 'tuning') {
-                let html = `<div class="game-panel"><div class="dumbara-panel">`;
-                for (let i = 0; i < 3; i++) {
-                    const tunedClass = state.stringsTuned[i] ? 'string-tuned' : '';
-                    html += `
-                        <div class="string-row">
-                            <div><strong>Струна ${i+1}</strong> (${state.stringValues[i]}%)</div>
-                            <div class="string-line ${tunedClass}" id="string-${i}"></div>
-                            <input type="range" class="slider" id="slider-${i}" min="0" max="100" value="${state.stringValues[i]}">
-                            <div style="font-size:12px; color:#aaa;">
-                                ${i === 0 ? '↓ низкий, упругий (20%)' : i === 1 ? '↓ высокий, звонкий (80%)' : '↓ средний, певучий (50%)'}
-                            </div>
-                        </div>
-                    `;
-                }
-                html += `<button class="game-button" onclick="finishTuning()">✅ Завершить настройку</button></div></div>`;
-                panel.innerHTML = html;
-
-                for (let i = 0; i < 3; i++) {
-                    const slider = document.getElementById(`slider-${i}`);
-                    if (slider) {
-                        slider.addEventListener('input', (function(idx) {
-                            return function(e) {
-                                const val = parseInt(e.target.value);
-                                state.stringValues[idx] = val;
-                                const diff = Math.abs(val - correctStringValues[idx]);
-                                state.stringsTuned[idx] = diff <= 15;
-                                const stringLine = document.getElementById(`string-${idx}`);
-                                if (state.stringsTuned[idx]) stringLine.classList.add('string-tuned');
-                                else stringLine.classList.remove('string-tuned');
-                                render();
-                            };
-                        })(i));
-                    }
-                }
-            }
-            else if (state.step === 'rhythm') {
-                panel.innerHTML = `
-                    <div class="game-panel">
-                        <div class="rhythm-buttons">
-                            <button class="rhythm-btn" onclick="chooseRhythm('batyr')">🎵 Хамақ батыра<br><small>подвиг, битва</small></button>
-                            <button class="rhythm-btn" onclick="chooseRhythm('yuly')">🎵 Хамақ юлы<br><small>дорога, странствие</small></button>
-                            <button class="rhythm-btn" onclick="chooseRhythm('ele')">🎵 Хамақ еле<br><small>ветер, судьба</small></button>
-                        </div>
-                    </div>
-                `;
-            }
-            else if (state.step === 'playing') {
-                let rhythmDisplay = '';
-                if (state.rhythmSequence.length) {
-                    rhythmDisplay = 'Ритм: ';
-                    for (let i = 0; i < state.rhythmSequence.length; i++) {
-                        rhythmDisplay += state.rhythmSequence[i] === -1 ? '⚫ пауза ' : `🔴 струна ${state.rhythmSequence[i]+1} `;
-                    }
-                }
-                panel.innerHTML = `
-                    <div class="game-panel">
-                        <div class="dumbara-panel">
-                            <div style="text-align:center; margin-bottom:15px;">🎸 ${rhythmDisplay}</div>
-                            <div class="rhythm-grid">
-                                <button class="string-btn" onclick="playString(0)">🎸 Струна 1</button>
-                                <button class="string-btn" onclick="playString(1)">🎸 Струна 2</button>
-                                <button class="string-btn" onclick="playString(2)">🎸 Струна 3</button>
-                                <button class="pause-btn" onclick="playPause()">⏸ ПАУЗА</button>
-                            </div>
-                            <button class="game-button" onclick="resetRhythm()">🔄 Сбросить ритм</button>
-                        </div>
-                    </div>
-                `;
-            }
-            else if (state.step === 'victory') {
-                panel.innerHTML = `<div class="game-panel"><button class="game-button" onclick="resetGame()">🎮 Играть заново</button></div>`;
-            }
-        }
-
-        function playPause() {
-            if (state.step !== 'playing') return;
+        function showDiary() {
+            updateBackground('diary');
+            gamePanelDiv.innerHTML = '';
+            progressDiv.style.display = 'none';
+            clickHint.style.display = 'block';
             
-            const expected = state.rhythmSequence[state.rhythmPos];
-            
-            if (expected === -1) {
-                state.rhythmPos++;
-                if (state.rhythmPos >= state.rhythmSequence.length) {
-                    state.step = 'victory';
-                    updateDialogue('🏆 Победа!', 'Сундук сдвигается! Под ним открывается проход в подвал.', '🏆');
-                    render();
-                    tg.MainButton.setText('🏆 Поделиться победой');
-                    tg.MainButton.show();
-                } else {
-                    tg.showAlert('✅ Пауза! Верно. Продолжаем...');
-                    render();
+            if (currentDiaryIndex < diaryPages.length) {
+                const page = diaryPages[currentDiaryIndex];
+                speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
+                dialogueTextSpan.innerHTML = page.text;
+                
+                if (page.action === 'startTuning') {
+                    // После этой страницы начнётся настройка
                 }
             } else {
-                tg.showAlert('❌ Ошибка! Сейчас должна быть нота, а не пауза. Начинай заново.');
-                state.rhythmPos = 0;
-                render();
+                // Начинаем настройку струн
+                startTuningMode();
             }
         }
 
-        function startTuning() {
-            state.step = 'tuning';
-            updateDialogue('Настройка думбыры', 'Подстрой каждую струну до нужного тона, ориентируясь на дневник.', '🎸');
-            render();
+        function showPage24() {
+            updateBackground('diary');
+            gamePanelDiv.innerHTML = '';
+            progressDiv.style.display = 'none';
+            clickHint.style.display = 'block';
+            
+            if (currentPage24Index < diaryPage24.length) {
+                const page = diaryPage24[currentPage24Index];
+                speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
+                dialogueTextSpan.innerHTML = page.text;
+                
+                if (page.action === 'startRhythmSelection') {
+                    // Будет вызвано после клика
+                }
+            }
+        }
+
+        function startTuningMode() {
+            state.mode = 'tuning';
+            updateBackground('dumbara');
+            clickHint.style.display = 'none';
+            progressDiv.style.display = 'block';
+            
+            speakerNameSpan.innerHTML = `<span>🎸</span> Настройка думбыры`;
+            dialogueTextSpan.innerHTML = 'Подстрой каждую струну до нужного тона, ориентируясь на дневник.';
+            
+            renderTuningPanel();
+        }
+
+        function renderTuningPanel() {
+            let html = `<div class="game-panel"><div class="dumbara-panel">`;
+            for (let i = 0; i < 3; i++) {
+                const tunedClass = state.stringsTuned[i] ? 'string-tuned' : '';
+                html += `
+                    <div class="string-row">
+                        <div><strong>Струна ${i+1}</strong> (${state.stringValues[i]}%)</div>
+                        <div class="string-line ${tunedClass}" id="string-${i}"></div>
+                        <input type="range" class="slider" id="slider-${i}" min="0" max="100" value="${state.stringValues[i]}">
+                        <div style="font-size:12px; color:#aaa;">
+                            ${i === 0 ? '↓ низкий, упругий (20%)' : i === 1 ? '↓ высокий, звонкий (80%)' : '↓ средний, певучий (50%)'}
+                        </div>
+                    </div>
+                `;
+            }
+            html += `<button class="game-button" onclick="finishTuning()">✅ Завершить настройку</button></div></div>`;
+            gamePanelDiv.innerHTML = html;
+
+            for (let i = 0; i < 3; i++) {
+                const slider = document.getElementById(`slider-${i}`);
+                if (slider) {
+                    slider.addEventListener('input', (function(idx) {
+                        return function(e) {
+                            const val = parseInt(e.target.value);
+                            state.stringValues[idx] = val;
+                            const diff = Math.abs(val - correctStringValues[idx]);
+                            state.stringsTuned[idx] = diff <= 15;
+                            const stringLine = document.getElementById(`string-${idx}`);
+                            if (state.stringsTuned[idx]) stringLine.classList.add('string-tuned');
+                            else stringLine.classList.remove('string-tuned');
+                            const tunedCount = state.stringsTuned.filter(Boolean).length;
+                            progressDiv.innerHTML = `🎵 Струн настроено: ${tunedCount}/3`;
+                        };
+                    })(i));
+                }
+            }
+            const tunedCount = state.stringsTuned.filter(Boolean).length;
+            progressDiv.innerHTML = `🎵 Струн настроено: ${tunedCount}/3`;
         }
 
         function finishTuning() {
             if (state.stringsTuned.every(v => v === true)) {
-                state.step = 'rhythm';
-                updateDialogue('✨ Думбыра заговорила', 'Но ларец всё ещё закрыт. Нужен правильный хамаҡ.<br><br>На полях: «Сэсэн скучает по сыну, ушедшему в поход. Он играл один напев каждый вечер, глядя на восток»', '✨');
-                render();
+                currentPage24Index = 0;
+                showPage24();
             } else {
                 tg.showAlert('Настрой все три струны! Ориентируйся на описания тона.');
             }
+        }
+
+        function startRhythmSelection() {
+            state.mode = 'rhythm_selection';
+            updateBackground('diary');
+            clickHint.style.display = 'none';
+            
+            speakerNameSpan.innerHTML = `<span>🎵</span> Выбор хамака`;
+            dialogueTextSpan.innerHTML = 'Какой напев играл сэсэн каждый вечер, глядя на восток?';
+            
+            gamePanelDiv.innerHTML = `
+                <div class="game-panel">
+                    <div class="rhythm-buttons">
+                        <button class="rhythm-btn" onclick="chooseRhythm('batyr')">🎵 Хамақ батыра<br><small>подвиг, битва</small></button>
+                        <button class="rhythm-btn" onclick="chooseRhythm('yuly')">🎵 Хамақ юлы<br><small>дорога, странствие</small></button>
+                        <button class="rhythm-btn" onclick="chooseRhythm('ele')">🎵 Хамақ еле<br><small>ветер, судьба</small></button>
+                    </div>
+                </div>
+            `;
         }
 
         function chooseRhythm(choice) {
@@ -397,74 +445,166 @@
                 
                 state.rhythmSequence = sequence;
                 state.rhythmPos = 0;
-                state.step = 'playing';
+                state.mode = 'rhythm_game';
                 
+                updateBackground('dumbara');
                 let name = choice === 'batyr' ? 'Хамақ батыра' : (choice === 'yuly' ? 'Хамақ юлы' : 'Хамақ еле');
-                updateDialogue('🎵 Игра', `Выбран ${name}. Сыграй мелодию в правильном ритме!\n\nНажимай на струны или кнопку ПАУЗА в нужном порядке.`, '🎵');
-                render();
+                speakerNameSpan.innerHTML = `<span>🎵</span> Игра на думбыре`;
+                dialogueTextSpan.innerHTML = `Выбран ${name}. Сыграй мелодию в правильном ритме!`;
+                
+                renderRhythmGame();
             } else {
                 tg.showAlert('❌ Неправильно! Попробуй ещё раз.');
             }
         }
 
-        function playString(stringId) {
-            if (state.step !== 'playing') return;
+        function renderRhythmGame() {
+            let rhythmDisplay = '';
+            if (state.rhythmSequence.length) {
+                rhythmDisplay = 'Ритм: ';
+                for (let i = 0; i < state.rhythmSequence.length; i++) {
+                    rhythmDisplay += state.rhythmSequence[i] === -1 ? '⚫ пауза ' : `🔴 струна ${state.rhythmSequence[i]+1} `;
+                }
+            }
+            gamePanelDiv.innerHTML = `
+                <div class="game-panel">
+                    <div class="dumbara-panel">
+                        <div style="text-align:center; margin-bottom:15px;">🎸 ${rhythmDisplay}</div>
+                        <div class="rhythm-grid">
+                            <button class="string-btn" onclick="playString(0)">🎸 Струна 1</button>
+                            <button class="string-btn" onclick="playString(1)">🎸 Струна 2</button>
+                            <button class="string-btn" onclick="playString(2)">🎸 Струна 3</button>
+                            <button class="pause-btn" onclick="playPause()">⏸ ПАУЗА</button>
+                        </div>
+                        <button class="game-button" onclick="resetRhythm()">🔄 Сбросить ритм</button>
+                    </div>
+                </div>
+            `;
+            progressDiv.innerHTML = '🎵 Сыграй мелодию!';
+        }
+
+        function playPause() {
+            if (state.mode !== 'rhythm_game') return;
             
             const expected = state.rhythmSequence[state.rhythmPos];
             
             if (expected === -1) {
-                tg.showAlert('❌ Фальшивая нота! Сейчас должна быть пауза. Нажми кнопку ПАУЗА.', '❌');
+                state.rhythmPos++;
+                if (state.rhythmPos >= state.rhythmSequence.length) {
+                    victory();
+                } else {
+                    tg.showAlert('✅ Пауза! Верно. Продолжаем...');
+                    renderRhythmGame();
+                }
+            } else {
+                tg.showAlert('❌ Ошибка! Сейчас должна быть нота, а не пауза. Начинай заново.');
                 state.rhythmPos = 0;
-                render();
+                renderRhythmGame();
+            }
+        }
+
+        function playString(stringId) {
+            if (state.mode !== 'rhythm_game') return;
+            
+            const expected = state.rhythmSequence[state.rhythmPos];
+            
+            if (expected === -1) {
+                tg.showAlert('❌ Фальшивая нота! Сейчас должна быть пауза. Нажми кнопку ПАУЗА.');
+                state.rhythmPos = 0;
+                renderRhythmGame();
                 return;
             }
             
             if (expected === stringId) {
                 state.rhythmPos++;
-                
                 if (state.rhythmPos >= state.rhythmSequence.length) {
-                    state.step = 'victory';
-                    updateDialogue('🏆 Победа!', 'Сундук сдвигается! Под ним открывается проход в подвал.', '🏆');
-                    render();
-                    tg.MainButton.setText('🏆 Поделиться победой');
-                    tg.MainButton.show();
+                    victory();
                 } else {
                     tg.showAlert('✅ Верно! Следующая нота...');
-                    render();
+                    renderRhythmGame();
                 }
             } else {
                 tg.showAlert(`❌ Не та струна! Нужно нажать струну ${expected+1}. Начинай заново.`);
                 state.rhythmPos = 0;
-                render();
+                renderRhythmGame();
             }
+        }
+
+        function victory() {
+            state.mode = 'victory';
+            updateBackground('chest');
+            speakerNameSpan.innerHTML = `<span>🏆</span> Победа!`;
+            dialogueTextSpan.innerHTML = 'Сундук сдвигается! Под ним открывается проход в подвал. Ты справился с загадкой думбыры!';
+            gamePanelDiv.innerHTML = `<div class="game-panel"><button class="game-button" onclick="resetGame()">🎮 Играть заново</button></div>`;
+            progressDiv.style.display = 'none';
+            tg.MainButton.setText('🏆 Поделиться победой');
+            tg.MainButton.show();
         }
 
         function resetRhythm() {
             state.rhythmPos = 0;
             tg.showAlert('🔄 Ритм сброшен. Начинай сначала!');
-            render();
+            renderRhythmGame();
         }
 
         function resetGame() {
             state = {
-                step: 'start',
+                mode: 'narrative',
                 stringsTuned: [false, false, false],
                 stringValues: [50, 50, 50],
                 correctRhythm: ['batyr', 'yuly', 'ele'][Math.floor(Math.random() * 3)],
                 rhythmSequence: [],
                 rhythmPos: 0
             };
-            updateDialogue('📖 Дневник сэсэна', '«Думбыра — не просто инструмент. У неё три струны...»', '📖');
-            document.getElementById('chestIcon').style.display = 'block';
-            render();
+            currentNarrativeIndex = 0;
+            currentDiaryIndex = 0;
+            currentPage24Index = 0;
+            narrativeStep = 0;
+            
+            updateBackground('black');
+            showNarrative();
             tg.MainButton.hide();
         }
 
-        document.getElementById('chestIcon').onclick = () => {
-            if (state.step === 'start') startTuning();
+        // Обработка клика по экрану для пролистывания текста
+        sceneDiv.addEventListener('click', (e) => {
+            // Если клик не по кнопке
+            if (e.target.tagName === 'BUTTON') return;
+            
+            if (state.mode === 'narrative') {
+                currentNarrativeIndex++;
+                showNarrative();
+            } 
+            else if (state.mode === 'narrative_diary') {
+                currentDiaryIndex++;
+                showDiary();
+            }
+            else if (state.mode === 'tuning') {
+                // Ничего, режим настройки
+            }
+            else if (state.mode === 'rhythm_selection') {
+                // Ничего
+            }
+            else if (state.mode === 'rhythm_game') {
+                // Ничего
+            }
+            else if (state.mode === 'victory') {
+                // Ничего
+            }
+        });
+
+        // Переопределяем showDiary для кликов
+        const originalShowDiary = showDiary;
+        window.showDiary = function() {
+            if (state.mode === 'narrative') {
+                state.mode = 'narrative_diary';
+                currentDiaryIndex = 0;
+                originalShowDiary();
+            }
         };
 
-        render();
+        // Старт
+        showNarrative();
         tg.ready();
     </script>
 </body>
