@@ -13,33 +13,35 @@
         }
 
         body {
-            font-family: 'Georgia', serif;
+            font-family: 'Georgia', 'Segoe UI', serif;
             min-height: 100vh;
-            padding: 20px;
-            background: #1a1a2e;
+            background: #0a0a1a;
         }
 
-        .container {
+        /* КОНТЕЙНЕР */
+        .game-container {
+            position: relative;
+            width: 100%;
             max-width: 500px;
             margin: 0 auto;
+            min-height: 100vh;
         }
 
-        /* ФОН ДЛЯ КАЖДОГО ЭТАПА */
+        /* СЦЕНА С ФОНОМ */
         .scene {
+            position: relative;
             width: 100%;
-            min-height: 300px;
-            border-radius: 25px;
+            min-height: 100vh;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
         }
 
-        /* ЯВНЫЕ ССЫЛКИ НА ТВОИ КАРТИНКИ */
+        /* ФОНЫ */
         .scene.room {
             background-image: url('https://KulturniHod.github.io/dumbara-game/images/room.jpg');
         }
@@ -55,39 +57,50 @@
             background-image: url('https://KulturniHod.github.io/dumbara-game/images/chest_open.jpg');
         }
 
-        .scene-overlay {
-            background: rgba(0,0,0,0.6);
-            width: 100%;
-            text-align: center;
-            padding: 15px;
-            color: #d4af37;
-            font-weight: bold;
-            font-size: 18px;
-            border-radius: 0 0 25px 25px;
-        }
-
-        .dialogue {
-            background: rgba(0,0,0,0.85);
-            border-radius: 20px;
+        /* ОКНО ДИАЛОГА ПОВЕРХ КАРТИНКИ */
+        .dialogue-box {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
             padding: 20px;
             margin-bottom: 20px;
             border-left: 5px solid #d4af37;
             color: #f0e6d2;
-            backdrop-filter: blur(5px);
+            font-size: 17px;
+            line-height: 1.5;
+            text-shadow: 1px 1px 2px black;
         }
 
-        .speaker {
+        /* Имя говорящего */
+        .speaker-name {
             color: #d4af37;
             font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Текст диалога */
+        .dialogue-text {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* ПАНЕЛЬ ИГРЫ (ползунки, кнопки) */
+        .game-panel {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 10px;
         }
 
         .dumbara-panel {
-            background: rgba(107,58,31,0.95);
-            border-radius: 60px 60px 30px 30px;
+            background: rgba(107, 58, 31, 0.95);
+            border-radius: 40px;
             padding: 20px;
-            margin: 20px 0;
         }
 
         .string-row {
@@ -142,14 +155,14 @@
 
         .rhythm-btn {
             flex: 1;
-            background: rgba(212,175,55,0.2);
+            background: rgba(212, 175, 55, 0.2);
             border: 1px solid #d4af37;
             color: #d4af37;
         }
 
         .progress {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 15px;
             color: #d4af37;
             font-size: 14px;
         }
@@ -158,37 +171,58 @@
             text-align: center;
             font-size: 60px;
             cursor: pointer;
-            margin: 10px 0;
+            margin-bottom: 20px;
             transition: transform 0.3s;
         }
 
         .chest-icon:hover {
             transform: scale(1.1);
         }
+
+        /* Кнопка выбора (развилка) */
+        .choice-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .choice-btn {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            text-align: left;
+            padding: 12px 16px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- ФОН, КОТОРЫЙ МЕНЯЕТСЯ -->
+    <div class="game-container">
+        <!-- СЦЕНА С ФОНОМ -->
         <div class="scene room" id="scene">
-            <div class="scene-overlay" id="sceneOverlay">🏠 Старинный дом</div>
-        </div>
+            
+            <!-- Сундук (кликабельный) -->
+            <div class="chest-icon" id="chestIcon">📦</div>
 
-        <div class="chest-icon" id="chestIcon">📦</div>
-
-        <div class="dialogue" id="dialogue">
-            <div class="speaker" id="speaker">📖 Дневник сэсэна</div>
-            <div id="dialogueText">
-                «Думбыра — не просто инструмент. У неё три струны:<br>
-                1 — голос батыра (мужество) — низкий, упругий<br>
-                2 — голос коня (путь) — высокий, звонкий<br>
-                3 — голос ветра (судьба) — средний, певучий»
+            <!-- ОКНО ДИАЛОГА ПОВЕРХ КАРТИНКИ -->
+            <div class="dialogue-box" id="dialogueBox">
+                <div class="speaker-name" id="speakerName">
+                    <span>📖</span> Дневник сэсэна
+                </div>
+                <div class="dialogue-text" id="dialogueText">
+                    «Думбыра — не просто инструмент. У неё три струны:<br>
+                    1 — голос батыра (мужество) — низкий, упругий<br>
+                    2 — голос коня (путь) — высокий, звонкий<br>
+                    3 — голос ветра (судьба) — средний, певучий»
+                </div>
             </div>
+
+            <!-- ПАНЕЛЬ ДЛЯ КНОПОК ИГРЫ -->
+            <div id="gamePanel"></div>
+
+            <!-- ПРОГРЕСС -->
+            <div class="progress" id="progress">🎵 Струн настроено: 0/3</div>
         </div>
-
-        <div id="gamePanel"></div>
-
-        <div class="progress" id="progress">🎵 Струн настроено: 0/3</div>
     </div>
 
     <script>
@@ -211,47 +245,24 @@
         // ФУНКЦИЯ СМЕНЫ ФОНА
         function updateBackground() {
             const sceneDiv = document.getElementById('scene');
-            const overlay = document.getElementById('sceneOverlay');
-            
-            // Убираем все классы фонов
             sceneDiv.classList.remove('room', 'dumbara', 'diary', 'chest');
             
             if (state.step === 'start') {
                 sceneDiv.classList.add('room');
-                overlay.innerHTML = '🏠 Старинный дом';
             } else if (state.step === 'tuning') {
                 sceneDiv.classList.add('dumbara');
-                overlay.innerHTML = '🎸 Настройка думбыры';
             } else if (state.step === 'rhythm') {
                 sceneDiv.classList.add('diary');
-                overlay.innerHTML = '📖 Дневник сэсэна (Страница 24)';
             } else if (state.step === 'playing') {
                 sceneDiv.classList.add('dumbara');
-                overlay.innerHTML = '🎸 Игра на думбыре';
             } else if (state.step === 'victory') {
                 sceneDiv.classList.add('chest');
-                overlay.innerHTML = '✨ Проход открыт! ✨';
                 document.getElementById('chestIcon').style.display = 'none';
             }
         }
 
-        const dialogues = {
-            start: {
-                speaker: '📖 Дневник сэсэна',
-                text: '«Думбыра — не просто инструмент. У неё три струны:<br>1 — голос батыра (мужество) — низкий, упругий<br>2 — голос коня (путь) — высокий, звонкий<br>3 — голос ветра (судьба) — средний, певучий»'
-            },
-            afterTuning: {
-                speaker: '✨ Думбыра заговорила',
-                text: 'Но ларец всё ещё закрыт. Нужен правильный хамаҡ.<br><br>На полях: «Сэсэн скучает по сыну, ушедшему в поход. Он играл один напев каждый вечер, глядя на восток»'
-            },
-            victory: {
-                speaker: '🏆 Победа!',
-                text: 'Сундук сдвигается! Под ним открывается проход в подвал.'
-            }
-        };
-
-        function updateDialogue(speaker, text) {
-            document.getElementById('speaker').innerHTML = speaker;
+        function updateDialogue(speaker, text, icon = '📖') {
+            document.getElementById('speakerName').innerHTML = `<span>${icon}</span> ${speaker}`;
             document.getElementById('dialogueText').innerHTML = text;
         }
 
@@ -266,7 +277,7 @@
                 panel.innerHTML = `<button class="game-button" onclick="startTuning()">🎸 Настроить думбыру</button>`;
             }
             else if (state.step === 'tuning') {
-                let html = `<div class="dumbara-panel">`;
+                let html = `<div class="game-panel"><div class="dumbara-panel">`;
                 for (let i = 0; i < 3; i++) {
                     const tunedClass = state.stringsTuned[i] ? 'string-tuned' : '';
                     html += `
@@ -280,36 +291,39 @@
                         </div>
                     `;
                 }
-                html += `<button class="game-button" onclick="finishTuning()">✅ Завершить настройку</button></div>`;
+                html += `<button class="game-button" onclick="finishTuning()">✅ Завершить настройку</button></div></div>`;
                 panel.innerHTML = html;
 
                 for (let i = 0; i < 3; i++) {
                     const slider = document.getElementById(`slider-${i}`);
-                    slider.addEventListener('input', (function(idx) {
-                        return function(e) {
-                            const val = parseInt(e.target.value);
-                            state.stringValues[idx] = val;
-                            const diff = Math.abs(val - correctStringValues[idx]);
-                            state.stringsTuned[idx] = diff <= 15;
-                            
-                            const stringLine = document.getElementById(`string-${idx}`);
-                            if (state.stringsTuned[idx]) {
-                                stringLine.classList.add('string-tuned');
-                            } else {
-                                stringLine.classList.remove('string-tuned');
-                            }
-                            
-                            document.querySelector(`#slider-${idx}`).parentElement.querySelector('strong').innerHTML = `Струна ${idx+1} (${val}%)`;
-                        };
-                    })(i));
+                    if (slider) {
+                        slider.addEventListener('input', (function(idx) {
+                            return function(e) {
+                                const val = parseInt(e.target.value);
+                                state.stringValues[idx] = val;
+                                const diff = Math.abs(val - correctStringValues[idx]);
+                                state.stringsTuned[idx] = diff <= 15;
+                                
+                                const stringLine = document.getElementById(`string-${idx}`);
+                                if (state.stringsTuned[idx]) {
+                                    stringLine.classList.add('string-tuned');
+                                } else {
+                                    stringLine.classList.remove('string-tuned');
+                                }
+                                render();
+                            };
+                        })(i));
+                    }
                 }
             }
             else if (state.step === 'rhythm') {
                 panel.innerHTML = `
-                    <div class="rhythm-buttons">
-                        <button class="rhythm-btn" onclick="chooseRhythm('batyr')">🎵 Хамақ батыра<br><small>подвиг, битва</small></button>
-                        <button class="rhythm-btn" onclick="chooseRhythm('yuly')">🎵 Хамақ юлы<br><small>дорога, странствие</small></button>
-                        <button class="rhythm-btn" onclick="chooseRhythm('ele')">🎵 Хамақ еле<br><small>ветер, судьба</small></button>
+                    <div class="game-panel">
+                        <div class="rhythm-buttons">
+                            <button class="rhythm-btn" onclick="chooseRhythm('batyr')">🎵 Хамақ батыра<br><small>подвиг, битва</small></button>
+                            <button class="rhythm-btn" onclick="chooseRhythm('yuly')">🎵 Хамақ юлы<br><small>дорога, странствие</small></button>
+                            <button class="rhythm-btn" onclick="chooseRhythm('ele')">🎵 Хамақ еле<br><small>ветер, судьба</small></button>
+                        </div>
                     </div>
                 `;
             }
@@ -322,30 +336,32 @@
                     }
                 }
                 panel.innerHTML = `
-                    <div class="dumbara-panel">
-                        <div style="text-align:center; margin-bottom:15px;">🎸 ${rhythmDisplay}</div>
-                        <button class="game-button" onclick="playString(0)">🎸 Струна 1</button>
-                        <button class="game-button" onclick="playString(1)">🎸 Струна 2</button>
-                        <button class="game-button" onclick="playString(2)">🎸 Струна 3</button>
-                        <button class="game-button" onclick="resetRhythm()">🔄 Сбросить и начать заново</button>
+                    <div class="game-panel">
+                        <div class="dumbara-panel">
+                            <div style="text-align:center; margin-bottom:15px;">🎸 ${rhythmDisplay}</div>
+                            <button class="game-button" onclick="playString(0)">🎸 Струна 1</button>
+                            <button class="game-button" onclick="playString(1)">🎸 Струна 2</button>
+                            <button class="game-button" onclick="playString(2)">🎸 Струна 3</button>
+                            <button class="game-button" onclick="resetRhythm()">🔄 Сбросить</button>
+                        </div>
                     </div>
                 `;
             }
             else if (state.step === 'victory') {
-                panel.innerHTML = `<button class="game-button" onclick="resetGame()">🎮 Играть заново</button>`;
+                panel.innerHTML = `<div class="game-panel"><button class="game-button" onclick="resetGame()">🎮 Играть заново</button></div>`;
             }
         }
 
         function startTuning() {
             state.step = 'tuning';
-            updateDialogue('🎸 Настройка думбыры', 'Подстрой каждую струну до нужного тона, ориентируясь на дневник.');
+            updateDialogue('Настройка думбыры', 'Подстрой каждую струну до нужного тона, ориентируясь на дневник.', '🎸');
             render();
         }
 
         function finishTuning() {
             if (state.stringsTuned.every(v => v === true)) {
                 state.step = 'rhythm';
-                updateDialogue(dialogues.afterTuning.speaker, dialogues.afterTuning.text);
+                updateDialogue('✨ Думбыра заговорила', 'Но ларец всё ещё закрыт. Нужен правильный хамаҡ.<br><br>На полях: «Сэсэн скучает по сыну, ушедшему в поход. Он играл один напев каждый вечер, глядя на восток»', '✨');
                 render();
             } else {
                 tg.showAlert('Настрой все три струны! Ориентируйся на описания тона.');
@@ -364,7 +380,7 @@
                 state.step = 'playing';
                 
                 let name = choice === 'batyr' ? 'Хамақ батыра' : (choice === 'yuly' ? 'Хамақ юлы' : 'Хамақ еле');
-                updateDialogue('🎵 Игра', `Выбран ${name}. Сыграй мелодию в правильном ритме!`);
+                updateDialogue('🎵 Игра', `Выбран ${name}. Сыграй мелодию в правильном ритме!`, '🎵');
                 render();
             } else {
                 tg.showAlert('❌ Неправильно! Попробуй ещё раз.');
@@ -388,7 +404,7 @@
                 
                 if (state.rhythmPos >= state.rhythmSequence.length) {
                     state.step = 'victory';
-                    updateDialogue(dialogues.victory.speaker, dialogues.victory.text);
+                    updateDialogue('🏆 Победа!', 'Сундук сдвигается! Под ним открывается проход в подвал.', '🏆');
                     render();
                     tg.MainButton.setText('🏆 Поделиться победой');
                     tg.MainButton.show();
@@ -418,7 +434,7 @@
                 rhythmSequence: [],
                 rhythmPos: 0
             };
-            updateDialogue(dialogues.start.speaker, dialogues.start.text);
+            updateDialogue('📖 Дневник сэсэна', '«Думбыра — не просто инструмент. У неё три струны...»', '📖');
             document.getElementById('chestIcon').style.display = 'block';
             render();
             tg.MainButton.hide();
