@@ -16,11 +16,11 @@ if not TOKEN:
 
 QUESTS = {
     1: {"name": "Думбыра (Башкирия)", "url": "https://KulturniHod.github.io/dumbara-game/"},
-    2: {"name": "Суд аксакалов (Татарстан)", "url": "https://KulturniHod.github.io/aksakal-game/"},
-    3: {"name": "Кантеле (Карелия)", "url": "https://KulturniHod.github.io/kantele-game/"},
-    4: {"name": "Думбыра (Башкирия)", "url": "https://KulturniHod.github.io/dumbara-game/"},
-    5: {"name": "Суд аксакалов (Татарстан)", "url": "https://KulturniHod.github.io/aksakal-game/"},
-    6: {"name": "Кантеле (Карелия)", "url": "https://KulturniHod.github.io/kantele-game/"},
+    2: {"name": "Суд аксакалов (Татарстан)", "url": "https://KulturniHod.github.io/dumbara-game/aksakal-game/"},
+    3: {"name": "Думбыра (Башкирия)", "url": "https://KulturniHod.github.io/dumbara-game/"},
+    4: {"name": "Суд аксакалов (Татарстан)", "url": "https://KulturniHod.github.io/dumbara-game/aksakal-game/"},
+    5: {"name": "Думбыра (Башкирия)", "url": "https://KulturniHod.github.io/dumbara-game/"},
+    6: {"name": "Суд аксакалов (Татарстан)", "url": "https://KulturniHod.github.io/dumbara-game/aksakal-game/"},
 }
 
 # ========== ИНИЦИАЛИЗАЦИЯ БОТА ==========
