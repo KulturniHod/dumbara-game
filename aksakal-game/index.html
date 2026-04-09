@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Суд аксакалов - визуальная новелла</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+            background: #0a0a1a;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .scene {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            cursor: pointer;
+        }
+
+        /* ФОНЫ — рабочие ссылки */
+        .scene.village { background-image: url('https://images.unsplash.com/photo-1582653291997-079a1b04e6d1?w=500'); background-size: cover; }
+        .scene.office { background-image: url('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=500'); background-size: cover; }
+        .scene.archive { background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=500'); background-size: cover; }
+        .scene.witness { background-image: url('https://images.unsplash.com/photo-1529101091764-c3526daf3f28?w=500'); background-size: cover; }
+        .scene.court { background-image: url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500'); background-size: cover; }
+
+        .dialogue-box {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #d4af37;
+            color: #f0e6d2;
+            font-size: 17px;
+            line-height: 1.5;
+        }
+
+        .speaker-name {
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dialogue-text {
+            font-size: 16px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .game-panel {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .documents-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+        }
+
+        .doc-btn {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            text-align: left;
+            padding: 15px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #d4af37, #b8960c);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: transform 0.2s;
+            font-family: 'Roboto', sans-serif;
+            width: calc(100% - 10px);
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        .choice-btn {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            text-align: center;
+            padding: 15px;
+            border-radius: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        .click-hint {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .evidence-count {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #d4af37;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="scene village" id="scene">
+        <div class="dialogue-box" id="dialogueBox">
+            <div class="speaker-name" id="speakerName"><span>🎭</span> Вы</div>
+            <div class="dialogue-text" id="dialogueText">Загрузка...</div>
+        </div>
+        <div class="click-hint" id="clickHint">▼ Нажмите на экран, чтобы продолжить ▼</div>
+        <div id="gamePanel"></div>
+        <div class="evidence-count" id="evidenceCount" style="display:none;"></div>
+    </div>
+</div>
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.hide();
+
+    let state = { mode: 'narrative', evidence: { rais: false, vahit: false, zuhra: false, document1: false, document2: false, document3: false, fatima: false, photo: false } };
+    
+    const prologue = [
+        { speaker: 'Вы', icon: '🎭', text: 'Сельский совет. Небольшое здание, где решается судьба участка земли.' },
+        { speaker: 'Вы', icon: '🎭', text: 'Антагонист хочет построить здесь торговый центр. Но местные говорят — здесь было кладбище и священная роща.' },
+        { speaker: 'Глава сельсовета', icon: '👩‍💼', text: 'Добро пожаловать. Аксакалы расходятся во мнениях, архив сгорел. Помогите разобраться.' },
+        { speaker: 'Глава сельсовета', icon: '👩‍💼', text: 'Я передаю вам три папки с показаниями и доступ к архиву. Изучите всё внимательно.' }
+    ];
+    
+    const witnesses = [
+        { speaker: 'Аксакал Раис (бывший председатель колхоза)', icon: '👴', text: '«Никаких могил я не помню. Рощу вырубили в 1960-х. Антагонист предлагает рабочие места. А эти легенды — выдумки, чтобы деньги сбить»', id: 'rais' },
+        { speaker: 'Аксакал Вахит (бывший учитель истории)', icon: '👴', text: '«Я помню могилы, камни с надписями. В 1960-х бульдозерами всё сровняли. Но корни старых деревьев до сих пор там»', id: 'vahit' },
+        { speaker: 'Аксакал Зухра (библиотекарь, краевед)', icon: '👵', text: '«Слышала от бабушки про рощу. Но документов нет. Если ничего нет — зачем цепляться? Нужны рабочие места»', id: 'zuhra' }
+    ];
+    
+    const docs = [
+        { name: 'Хозяйственная книга колхоза, 1960 год', text: '«При работах обнаружены препятствия: крупные камни, старые корни. Корни сожжены на месте. Председатель колхоза (подпись неразборчиво)»', id: 'document1' },
+        { name: 'Ответ из районного архива, 1989 год', text: '«Документов о закрытии кладбищ не имеется. Часть документов утрачена в годы войны»', id: 'document2' },
+        { name: 'Полевой дневник археолога, 1985 год', text: '«Пятно тёмной почвы, крапива, лопух. Фрагменты керамики, обработанный камень. Требует изучения»', id: 'document3' }
+    ];
+    
+    const extras = [
+        { name: 'Бабушка Фатима, 92 года', text: '«В детстве нас туда не пускали — там могилы. В 1960-х бульдозеры корни ломали»', id: 'fatima' },
+        { name: 'Старая фотография из альбома Зухры, 1954 год', text: 'На снимке видны тёмные холмики и деревья, образующие почти правильный круг.', id: 'photo' }
+    ];
+    
+    let prologueIdx = 0;
+    let currentWitnessIdx = 0;
+    let currentDocIdx = 0;
+    let currentExtraIdx = 0;
+    
+    const sceneDiv = document.getElementById('scene');
+    const speakerSpan = document.getElementById('speakerName');
+    const textSpan = document.getElementById('dialogueText');
+    const panelDiv = document.getElementById('gamePanel');
+    const clickHintDiv = document.getElementById('clickHint');
+    const evidenceDiv = document.getElementById('evidenceCount');
+    
+    function setBackground(bg) {
+        sceneDiv.classList.remove('village', 'office', 'archive', 'witness', 'court');
+        sceneDiv.classList.add(bg);
+    }
+    
+    function updateCount() {
+        let count = Object.values(state.evidence).filter(v => v).length;
+        evidenceDiv.innerHTML = `📋 Улик собрано: ${count}/8`;
+    }
+    
+    function showPrologue() {
+        setBackground('office');
+        panelDiv.innerHTML = '';
+        evidenceDiv.style.display = 'none';
+        clickHintDiv.style.display = 'block';
+        if (prologueIdx < prologue.length) {
+            speakerSpan.innerHTML = `<span>${prologue[prologueIdx].icon}</span> ${prologue[prologueIdx].speaker}`;
+            textSpan.innerHTML = prologue[prologueIdx].text;
+        } else {
+            startInvestigation();
+        }
+    }
+    
+    function startInvestigation() {
+        state.mode = 'investigation';
+        setBackground('archive');
+        clickHintDiv.style.display = 'none';
+        evidenceDiv.style.display = 'block';
+        updateCount();
+        speakerSpan.innerHTML = `<span>📂</span> Расследование`;
+        textSpan.innerHTML = 'Изучите показания аксакалов, архивные документы и найдите дополнительные улики.';
+        panelDiv.innerHTML = `
+            <div class="game-panel">
+                <div class="documents-grid">
+                    <div class="doc-btn" onclick="showWitnesses()">📋 Показания аксакалов</div>
+                    <div class="doc-btn" onclick="showArchiveDocs()">📁 Архивные документы</div>
+                    <div class="doc-btn" onclick="showExtraEvidence()">🔍 Дополнительные улики</div>
+                </div>
+                <button onclick="finishInvestigation()">⚖️ Завершить расследование</button>
+            </div>
+        `;
+    }
+    
+    function showWitnesses() {
+        setBackground('witness');
+        currentWitnessIdx = 0;
+        showWitness(0);
+    }
+    
+    function showWitness(idx) {
+        if (idx >= witnesses.length) {
+            startInvestigation();
+            return;
+        }
+        let w = witnesses[idx];
+        speakerSpan.innerHTML = `<span>${w.icon}</span> ${w.speaker}`;
+        textSpan.innerHTML = w.text;
+        panelDiv.innerHTML = `
+            <div class="game-panel">
+                <button onclick="markWitness(${idx})">📌 Отметить как изученное</button>
+                <button onclick="showWitness(${idx + 1})">➡️ Следующий аксакал</button>
+                <button onclick="startInvestigation()">🔙 Вернуться</button>
+            </div>
+        `;
+    }
+    
+    function markWitness(idx) {
+        let w = witnesses[idx];
+        state.evidence[w.id] = true;
+        updateCount();
+        tg.showAlert('Показания отмечены');
+        showWitness(idx + 1);
+    }
+    
+    function showArchiveDocs() {
+        setBackground('archive');
+        currentDocIdx = 0;
+        showDoc(0);
+    }
+    
+    function showDoc(idx) {
+        if (idx >= docs.length) {
+            startInvestigation();
+            return;
+        }
+        let d = docs[idx];
+        speakerSpan.innerHTML = `<span>📄</span> ${d.name}`;
+        textSpan.innerHTML = d.text;
+        panelDiv.innerHTML = `
+            <div class="game-panel">
+                <button onclick="markDoc(${idx})">📌 Отметить как изученное</button>
+                <button onclick="showDoc(${idx + 1})">➡️ Следующий документ</button>
+                <button onclick="startInvestigation()">🔙 Вернуться</button>
+            </div>
+        `;
+    }
+    
+    function markDoc(idx) {
+        let d = docs[idx];
+        state.evidence[d.id] = true;
+        updateCount();
+        tg.showAlert('Документ отмечен');
+        showDoc(idx + 1);
+    }
+    
+    function showExtraEvidence() {
+        setBackground('witness');
+        currentExtraIdx = 0;
+        showExtra(0);
+    }
+    
+    function showExtra(idx) {
+        if (idx >= extras.length) {
+            startInvestigation();
+            return;
+        }
+        let e = extras[idx];
+        speakerSpan.innerHTML = `<span>🔍</span> ${e.name}`;
+        textSpan.innerHTML = e.text;
+        panelDiv.innerHTML = `
+            <div class="game-panel">
+                <button onclick="markExtra(${idx})">📌 Отметить как изученное</button>
+                <button onclick="showExtra(${idx + 1})">➡️ Следующая улика</button>
+                <button onclick="startInvestigation()">🔙 Вернуться</button>
+            </div>
+        `;
+    }
+    
+    function markExtra(idx) {
+        let e = extras[idx];
+        state.evidence[e.id] = true;
+        updateCount();
+        tg.showAlert('Улика добавлена');
+        showExtra(idx + 1);
+    }
+    
+    function finishInvestigation() {
+        setBackground('court');
+        state.mode = 'final';
+        speakerSpan.innerHTML = `<span>⚖️</span> Суд аксакалов`;
+        textSpan.innerHTML = 'Вы собрали все улики. Какая стратегия вам ближе?';
+        panelDiv.innerHTML = `
+            <div class="game-panel">
+                <div class="documents-grid">
+                    <div class="choice-btn" onclick="makeChoice('harsh')">⚡ Жёсткое разоблачение</div>
+                    <div class="choice-btn" onclick="makeChoice('soft')">🤝 Мягкое убеждение</div>
+                    <div class="choice-btn" onclick="makeChoice('compromise')">🏛️ Компромисс</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function makeChoice(choice) {
+        let epilogue = '';
+        if (choice === 'harsh') {
+            epilogue = 'Вы публично указали на противоречия в словах Раиса. Суд аксакалов признал землю исторически ценной. Раис потерял авторитет. Участок сохранён.';
+        } else if (choice === 'soft') {
+            epilogue = 'Вы сосредоточились на доказательствах, не вынося личных обвинений. Раис изменил показания под давлением фактов. Земля признана значимой.';
+        } else {
+            epilogue = 'Вы признали, что прямых доказательств нет, но совокупность улик достаточна. Часть участка — под историческую зону, остальное — под развитие.';
+        }
+        speakerSpan.innerHTML = `<span>🏆</span> Эпилог`;
+        textSpan.innerHTML = epilogue + '\n\nГлава сельсовета благодарит вас. Вы получили новые улики для основного расследования.';
+        panelDiv.innerHTML = `<div class="game-panel"><button onclick="resetGame()">🎮 Пройти заново</button></div>`;
+        evidenceDiv.style.display = 'none';
+    }
+    
+    function resetGame() {
+        location.reload();
+    }
+    
+    sceneDiv.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'BUTTON' && state.mode === 'narrative') {
+            prologueIdx++;
+            showPrologue();
+        }
+    });
+    
+    showPrologue();
+    tg.ready();
+</script>
+</body>
+</html>
