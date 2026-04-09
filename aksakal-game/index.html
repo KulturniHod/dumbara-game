@@ -2,56 +2,193 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Суд аксакалов</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Суд аксакалов - визуальная новелла</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
-            background: #1a1a2e;
-            padding: 20px;
-            color: white;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
         }
-        .container { max-width: 500px; margin: 0 auto; }
-        .dialogue {
-            background: rgba(0,0,0,0.8);
-            border-radius: 20px;
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+            background: #0a0a1a;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .scene {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            cursor: pointer;
+        }
+
+        .scene.office { background-image: url('images/office.jpg'); background-size: cover; }
+        .scene.archive { background-image: url('images/archive.jpg'); background-size: cover; }
+        .scene.witness { background-image: url('images/witness.jpg'); background-size: cover; }
+        .scene.court { background-image: url('images/court.jpg'); background-size: cover; }
+
+        .dialogue-box {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
             padding: 20px;
             margin-bottom: 20px;
-            border-left: 4px solid #d4af37;
+            border-left: 5px solid #d4af37;
+            color: #f0e6d2;
+            font-size: 17px;
+            line-height: 1.5;
         }
-        .speaker { color: #d4af37; font-weight: bold; margin-bottom: 10px; }
-        button {
-            background: #d4af37;
-            border: none;
-            padding: 12px;
-            border-radius: 30px;
-            margin: 5px;
-            width: calc(100% - 10px);
+
+        .speaker-name {
+            color: #d4af37;
             font-weight: bold;
-            cursor: pointer;
+            font-size: 20px;
+            margin-bottom: 12px;
         }
+
+        .dialogue-text {
+            font-size: 16px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .game-panel {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .documents-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+        }
+
         .doc-btn {
-            background: rgba(212,175,55,0.2);
+            background: rgba(212, 175, 55, 0.2);
             border: 1px solid #d4af37;
             color: #d4af37;
+            text-align: left;
             padding: 15px;
             border-radius: 16px;
-            margin: 8px 0;
-            text-align: center;
             cursor: pointer;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s;
         }
-        .click-hint { text-align: center; margin-top: 15px; font-size: 12px; color: #888; }
+
+        .doc-btn:hover {
+            background: rgba(212, 175, 55, 0.35);
+        }
+
+        button {
+            background: linear-gradient(135deg, #d4af37, #b8960c);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: transform 0.2s;
+            font-family: 'Roboto', sans-serif;
+            width: calc(100% - 10px);
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .choice-btn {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            text-align: center;
+            padding: 15px;
+            border-radius: 16px;
+            cursor: pointer;
+            margin: 8px 0;
+            transition: all 0.2s;
+        }
+
+        .choice-btn:hover {
+            background: rgba(212, 175, 55, 0.3);
+        }
+
+        .click-hint {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .evidence-count {
+            text-align: center;
+            margin-top: 15px;
+            color: #d4af37;
+            font-size: 14px;
+        }
+
+        .warning {
+            color: #ffaa00;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="dialogue">
-        <div class="speaker" id="speakerName">📖 Загрузка</div>
-        <div class="dialogue-text" id="dialogueText">Загрузка...</div>
+<div class="game-container">
+    <div class="scene office" id="scene">
+        <div class="dialogue-box" id="dialogueBox">
+            <div class="speaker-name" id="speakerName">
+                Вы
+            </div>
+            <div class="dialogue-text" id="dialogueText">
+                Загрузка...
+            </div>
+        </div>
+        <div class="click-hint" id="clickHint">Нажмите на экран, чтобы продолжить</div>
+        <div id="gamePanel"></div>
+        <div class="evidence-count hidden" id="evidenceCount"></div>
+        <div class="warning hidden" id="warningMessage"></div>
     </div>
-    <div class="click-hint" id="clickHint">▼ Нажмите на экран ▼</div>
-    <div id="gamePanel"></div>
 </div>
 
 <script>
@@ -59,109 +196,269 @@
     tg.expand();
     tg.MainButton.hide();
 
-    let step = 'prologue';
-    let prologueIndex = 0;
-    let evidence = {
-        rais: false, vahit: false, zuhra: false,
-        doc1: false, doc2: false, doc3: false,
-        fatima: false, photo: false
+    let state = {
+        mode: 'narrative',
+        evidence: {
+            rais: false, vahit: false, zuhra: false,
+            doc1: false, doc2: false, doc3: false,
+            fatima: false, photo: false
+        }
     };
 
-    const prologueTexts = [
-        { speaker: '🎭 Вы', text: 'Сельский совет. Решается судьба участка земли.' },
-        { speaker: '🎭 Вы', text: 'Антагонист хочет построить торговый центр. Но местные говорят — здесь было кладбище.' },
-        { speaker: '👩‍💼 Глава сельсовета', text: 'Аксакалы расходятся во мнениях, архив сгорел. Помогите разобраться.' }
+    const TOTAL_EVIDENCE = 8;
+
+    const prologueScenes = [
+        { speaker: 'Вы', text: 'Сельский совет. Небольшое здание в районном центре, где решается судьба участка земли.' },
+        { speaker: 'Вы', text: 'Антагонист планирует построить здесь торгово-развлекательный центр. Но местные жители утверждают, что на этом месте находилось родовое кладбище и священная роща.' },
+        { speaker: 'Глава сельсовета', text: 'Добро пожаловать. Аксакалы расходятся во мнениях, архив частично сгорел. Помогите разобраться, кто говорит правду.' },
+        { speaker: 'Глава сельсовета', text: 'Я передаю вам три папки с показаниями старейшин и доступ к уцелевшим архивным материалам. Изучите всё внимательно.' }
     ];
 
-    const witnesses = [
-        { name: 'Аксакал Раис', text: '«Никаких могил я не помню. Рощу вырубили в 1960-х. Нужны рабочие места»', id: 'rais' },
-        { name: 'Аксакал Вахит', text: '«Я помню могилы, камни с надписями. В 1960-х бульдозерами всё сровняли»', id: 'vahit' },
-        { name: 'Аксакал Зухра', text: '«Слышала от бабушки про рощу. Но документов нет. Может, не стоит цепляться?»', id: 'zuhra' }
+    const witnessStatements = [
+        { speaker: 'Аксакал Раис', text: 'Я на этой земле вырос. Мой отец пас там скот, дед пас. Никаких могил я там не помню. Роща? Была роща, но её вырубили ещё при советской власти под пашню. В 1960-х там уже было поле. Антагонист предлагает построить центр, рабочие места появятся. А эти легенды про кладбище — молодёжь выдумывает, чтобы деньги сбить. Я против обмана.', id: 'rais' },
+        { speaker: 'Аксакал Вахит', text: 'Я помню, как в детстве отец водил меня туда. Там были старые могилы, камни с надписями. Не все разобрали, но отец говорил, что это род Юлдашевых. Последнее захоронение было в 1930-е. Потом в 1960-е пришли строители, сравняли холмы бульдозером, сделали поле. Но корни старых деревьев до сих пор там. Я сам видел. Память осталась.', id: 'vahit' },
+        { speaker: 'Аксакал Зухра', text: 'Я слышала от бабушки, что там была священная роща. Приносили дары, просили дождя. Но это было очень давно, ещё до революции. Документов у меня нет, только рассказы. Честно говоря, если нет ни могил, ни рощи, то и говорить не о чём. Антагонист предлагает построить центр, нам нужны рабочие места. Может, не стоит цепляться за то, чего уже нет?', id: 'zuhra' }
     ];
 
-    const documents = [
-        { name: 'Хозяйственная книга, 1960 г.', text: '«При работах обнаружены камни и старые корни»', id: 'doc1' },
-        { name: 'Ответ из архива, 1989 г.', text: '«Документов о закрытии кладбищ не имеется»', id: 'doc2' },
-        { name: 'Дневник археолога, 1985 г.', text: '«Тёмная почва, крапива, фрагменты керамики»', id: 'doc3' }
+    const archiveDocs = [
+        { name: 'Хозяйственная книга колхоза, 1960 год', text: 'Акт списания земель. Участок за восточной околицей, 2,4 гектара. По решению правления колхоза земли, ранее не использовавшиеся в севообороте, переданы в пахотный фонд. При проведении работ обнаружены препятствия: крупные камни, старые древесные корни. Часть камней вывезена на окраину, корни сожжены на месте. Работы завершены. Председатель колхоза (подпись неразборчиво).', id: 'doc1' },
+        { name: 'Ответ из районного архива, 1989 год', text: 'Уважаемый товарищ! На Ваш запрос о наличии сведений о захоронениях в районе деревни Тептяри сообщаем следующее. В метрических книгах, переданных на хранение в районный архив, указания на населённый пункт Тептяри отсутствуют. Часть документов церковного делопроизводства за 1920–1930-е годы была утрачена в период Великой Отечественной войны. Документов райисполкома о закрытии или переносе каких-либо кладбищ в данном районе в нашем распоряжении не имеется. Заведующий архивом.', id: 'doc2' },
+        { name: 'Полевой дневник археолога, 1985 год', text: 'Обследование окрестностей д. Тептяри. На поле за восточной околицей заметна аномалия — пятно более тёмной почвы диаметром около 30 метров. Растительность на этом участке отличается: крапива, лопух, в то время как вокруг — злаковые. На поверхности найдены фрагменты керамики (вероятно, XIX — начало XX в.), а также кусок известняка со следами обработки. Местные жители говорят, что здесь "раньше стояли камни". Требует дальнейшего изучения.', id: 'doc3' }
     ];
 
-    const extras = [
-        { name: 'Бабушка Фатима', text: '«В детстве нас туда не пускали — там могилы»', id: 'fatima' },
-        { name: 'Старая фотография, 1954 г.', text: 'На снимке видны тёмные холмики и деревья кругом.', id: 'photo' }
+    const extraEvidence = [
+        { name: 'Бабушка Фатима, 92 года', text: 'В детстве нас туда не пускали. Мать говорила — там могилы старые, тревожить нельзя. А потом, в шестидесятых, приехали трактора, всё сровняли. Я сама видела, как камни вывозили. Мой муж тогда в колхозе работал, рассказывал, что бульдозеристы ругались — корни толстые были, технику ломали.', id: 'fatima' },
+        { name: 'Старая фотография из альбома, 1954 год', text: 'На обороте подпись карандашом: "Тептяри, 1954 год. Вид на восточную околицу". На снимке видно поле, на котором различимы несколько тёмных холмиков неправильной формы, а вдалеке — группа высоких деревьев, образующих почти правильный круг.', id: 'photo' }
     ];
 
-    function updateUI(speaker, text, panelHtml) {
-        document.getElementById('speakerName').innerHTML = speaker;
-        document.getElementById('dialogueText').innerHTML = text;
-        document.getElementById('gamePanel').innerHTML = panelHtml || '';
+    let prologueIndex = 0;
+    let currentWitnessIndex = 0;
+    let currentDocIndex = 0;
+    let currentExtraIndex = 0;
+
+    const sceneDiv = document.getElementById('scene');
+    const speakerNameSpan = document.getElementById('speakerName');
+    const dialogueTextSpan = document.getElementById('dialogueText');
+    const gamePanelDiv = document.getElementById('gamePanel');
+    const clickHint = document.getElementById('clickHint');
+    const evidenceCountDiv = document.getElementById('evidenceCount');
+    const warningMessageDiv = document.getElementById('warningMessage');
+
+    function setBackground(bgClass) {
+        sceneDiv.classList.remove('office', 'archive', 'witness', 'court');
+        sceneDiv.classList.add(bgClass);
+    }
+
+    function getEvidenceCount() {
+        return Object.values(state.evidence).filter(Boolean).length;
+    }
+
+    function updateEvidenceCount() {
+        const count = getEvidenceCount();
+        evidenceCountDiv.innerHTML = `Улик собрано: ${count} из ${TOTAL_EVIDENCE}`;
+        
+        if (count === TOTAL_EVIDENCE) {
+            warningMessageDiv.classList.add('hidden');
+        }
+    }
+
+    function showWarning() {
+        const count = getEvidenceCount();
+        if (count < TOTAL_EVIDENCE) {
+            warningMessageDiv.classList.remove('hidden');
+            warningMessageDiv.innerHTML = `Собрано только ${count} из ${TOTAL_EVIDENCE} улик. Продолжите расследование, чтобы вынести справедливое решение.`;
+        } else {
+            warningMessageDiv.classList.add('hidden');
+        }
     }
 
     function showPrologue() {
-        if (prologueIndex < prologueTexts.length) {
-            const p = prologueTexts[prologueIndex];
-            updateUI(p.speaker, p.text, '');
+        setBackground('office');
+        gamePanelDiv.innerHTML = '';
+        evidenceCountDiv.classList.add('hidden');
+        warningMessageDiv.classList.add('hidden');
+        clickHint.style.display = 'block';
+        
+        if (prologueIndex < prologueScenes.length) {
+            const scene = prologueScenes[prologueIndex];
+            speakerNameSpan.innerHTML = scene.speaker;
+            dialogueTextSpan.innerHTML = scene.text;
         } else {
             startInvestigation();
         }
     }
 
     function startInvestigation() {
-        step = 'investigation';
-        updateUI('📂 Расследование', 'Изучите показания, документы и улики.', `
-            <div>
-                <div class="doc-btn" onclick="showWitnesses()">📋 Показания аксакалов</div>
-                <div class="doc-btn" onclick="showDocuments()">📁 Архивные документы</div>
-                <div class="doc-btn" onclick="showExtras()">🔍 Дополнительные улики</div>
-                <button onclick="finishInvestigation()">⚖️ Завершить расследование</button>
+        state.mode = 'investigation';
+        setBackground('archive');
+        clickHint.style.display = 'none';
+        evidenceCountDiv.classList.remove('hidden');
+        warningMessageDiv.classList.add('hidden');
+        updateEvidenceCount();
+        
+        speakerNameSpan.innerHTML = 'Расследование';
+        dialogueTextSpan.innerHTML = 'Изучите показания аксакалов, архивные документы и найдите дополнительные улики.';
+        
+        gamePanelDiv.innerHTML = `
+            <div class="game-panel">
+                <div class="documents-grid">
+                    <div class="doc-btn" onclick="showWitnesses()">Показания аксакалов</div>
+                    <div class="doc-btn" onclick="showArchiveDocs()">Архивные документы</div>
+                    <div class="doc-btn" onclick="showExtraEvidence()">Дополнительные улики</div>
+                </div>
+                <button onclick="tryFinishInvestigation()">Завершить расследование</button>
             </div>
-        `);
+        `;
     }
 
-    function showWitnesses() { showList(witnesses, 0, 'witness'); }
-    function showDocuments() { showList(documents, 0, 'doc'); }
-    function showExtras() { showList(extras, 0, 'extra'); }
-
-    function showList(list, index, type) {
-        if (index >= list.length) { startInvestigation(); return; }
-        const item = list[index];
-        let buttons = `<div>`;
-        if (!evidence[item.id]) {
-            buttons += `<button onclick="markItem(${index}, '${type}')">📌 Отметить как изученное</button>`;
+    function tryFinishInvestigation() {
+        const count = getEvidenceCount();
+        if (count === TOTAL_EVIDENCE) {
+            finishInvestigation();
+        } else {
+            showWarning();
+            tg.showAlert(`Собрано только ${count} из ${TOTAL_EVIDENCE} улик. Продолжите расследование!`);
         }
-        buttons += `<button onclick="showList(${type === 'witness' ? 'witnesses' : (type === 'doc' ? 'documents' : 'extras')}, ${index + 1}, '${type}')">➡️ Далее</button>`;
-        buttons += `<button onclick="startInvestigation()">🔙 Назад</button></div>`;
-        updateUI(`📄 ${item.name}`, item.text, buttons);
     }
 
-    function markItem(index, type) {
-        let list = type === 'witness' ? witnesses : (type === 'doc' ? documents : extras);
-        evidence[list[index].id] = true;
-        tg.showAlert('Отмечено!');
-        showList(list, index + 1, type);
+    function showWitnesses() {
+        setBackground('witness');
+        currentWitnessIndex = 0;
+        showWitness(0);
+    }
+
+    function showWitness(index) {
+        if (index >= witnessStatements.length) {
+            startInvestigation();
+            return;
+        }
+        const w = witnessStatements[index];
+        speakerNameSpan.innerHTML = w.speaker;
+        dialogueTextSpan.innerHTML = w.text;
+        
+        gamePanelDiv.innerHTML = `
+            <div class="game-panel">
+                ${!state.evidence[w.id] ? `<button onclick="markWitness(${index})">Отметить как изученное</button>` : ''}
+                <button onclick="showWitness(${index + 1})">Следующий аксакал</button>
+                <button onclick="startInvestigation()">Вернуться к расследованию</button>
+            </div>
+        `;
+    }
+
+    function markWitness(index) {
+        const w = witnessStatements[index];
+        state.evidence[w.id] = true;
+        updateEvidenceCount();
+        tg.showAlert('Показания отмечены');
+        showWitness(index + 1);
+    }
+
+    function showArchiveDocs() {
+        setBackground('archive');
+        currentDocIndex = 0;
+        showDoc(0);
+    }
+
+    function showDoc(index) {
+        if (index >= archiveDocs.length) {
+            startInvestigation();
+            return;
+        }
+        const d = archiveDocs[index];
+        speakerNameSpan.innerHTML = d.name;
+        dialogueTextSpan.innerHTML = d.text;
+        
+        gamePanelDiv.innerHTML = `
+            <div class="game-panel">
+                ${!state.evidence[d.id] ? `<button onclick="markDoc(${index})">Отметить как изученное</button>` : ''}
+                <button onclick="showDoc(${index + 1})">Следующий документ</button>
+                <button onclick="startInvestigation()">Вернуться к расследованию</button>
+            </div>
+        `;
+    }
+
+    function markDoc(index) {
+        const d = archiveDocs[index];
+        state.evidence[d.id] = true;
+        updateEvidenceCount();
+        tg.showAlert('Документ отмечен');
+        showDoc(index + 1);
+    }
+
+    function showExtraEvidence() {
+        setBackground('witness');
+        currentExtraIndex = 0;
+        showExtra(0);
+    }
+
+    function showExtra(index) {
+        if (index >= extraEvidence.length) {
+            startInvestigation();
+            return;
+        }
+        const e = extraEvidence[index];
+        speakerNameSpan.innerHTML = e.name;
+        dialogueTextSpan.innerHTML = e.text;
+        
+        gamePanelDiv.innerHTML = `
+            <div class="game-panel">
+                ${!state.evidence[e.id] ? `<button onclick="markExtra(${index})">Отметить как изученное</button>` : ''}
+                <button onclick="showExtra(${index + 1})">Следующая улика</button>
+                <button onclick="startInvestigation()">Вернуться к расследованию</button>
+            </div>
+        `;
+    }
+
+    function markExtra(index) {
+        const e = extraEvidence[index];
+        state.evidence[e.id] = true;
+        updateEvidenceCount();
+        tg.showAlert('Улика добавлена');
+        showExtra(index + 1);
     }
 
     function finishInvestigation() {
-        step = 'final';
-        updateUI('⚖️ Суд аксакалов', 'Вы собрали улики. Какая стратегия?', `
-            <div>
-                <div class="doc-btn" onclick="makeChoice('harsh')">⚡ Жёсткое разоблачение</div>
-                <div class="doc-btn" onclick="makeChoice('soft')">🤝 Мягкое убеждение</div>
-                <div class="doc-btn" onclick="makeChoice('compromise')">🏛️ Компромисс</div>
+        state.mode = 'final';
+        setBackground('court');
+        speakerNameSpan.innerHTML = 'Суд аксакалов';
+        dialogueTextSpan.innerHTML = 'Вы собрали все улики. Какая стратегия вам ближе?';
+        
+        gamePanelDiv.innerHTML = `
+            <div class="game-panel">
+                <div class="choice-btn" onclick="makeChoice('harsh')">Жёсткое разоблачение</div>
+                <div class="choice-btn" onclick="makeChoice('soft')">Мягкое убеждение</div>
+                <div class="choice-btn" onclick="makeChoice('compromise')">Компромисс</div>
             </div>
-        `);
+        `;
     }
 
     function makeChoice(choice) {
-        let text = choice === 'harsh' ? 'Вы разоблачили Раиса. Участок сохранён.' :
-                   choice === 'soft' ? 'Вы доказали ценность земли без обвинений.' :
-                   'Часть участка — под историческую зону.';
-        updateUI('🏆 Эпилог', text + '\n\nГлава сельсовета благодарит вас.', `<button onclick="resetGame()">🎮 Пройти заново</button>`);
+        let epilogue = '';
+        if (choice === 'harsh') {
+            epilogue = 'Вы публично указали на противоречия в словах Раиса. Суд аксакалов признал ваши аргументы убедительными. Раис потерял авторитет, старейшины подтвердили историческую ценность земли. Участок сохранён.';
+        } else if (choice === 'soft') {
+            epilogue = 'Вы не выносили личных обвинений, а сосредоточились на доказательствах. Раис вынужден изменить показания под давлением фактов. Земля признана исторически значимой.';
+        } else {
+            epilogue = 'Вы признали, что прямых юридических доказательств нет, но совокупность улик достаточна. Часть участка выделена под историческую зону, остальное — для развития. Раис согласен, но часть жителей остаётся недовольна.';
+        }
+        
+        speakerNameSpan.innerHTML = 'Эпилог';
+        dialogueTextSpan.innerHTML = epilogue + '\n\nГлава сельсовета благодарит вас за помощь. Вы получили новые улики для основного расследования и заслужили уважение местных жителей.';
+        
+        gamePanelDiv.innerHTML = `<div class="game-panel"><button onclick="resetGame()">Пройти заново</button></div>`;
+        evidenceCountDiv.classList.add('hidden');
+        warningMessageDiv.classList.add('hidden');
+        tg.MainButton.setText('Завершить');
+        tg.MainButton.show();
     }
 
-    function resetGame() { location.reload(); }
+    function resetGame() {
+        location.reload();
+    }
 
-    document.body.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'BUTTON' && step === 'prologue') {
+    sceneDiv.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        if (state.mode === 'narrative') {
             prologueIndex++;
             showPrologue();
         }
