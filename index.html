@@ -331,7 +331,7 @@
             
             if (prologueIndex < prologueScenes.length) {
                 const scene = prologueScenes[prologueIndex];
-                speakerNameSpan.innerHTML = `<span>${scene.icon}</span> ${scene.speaker}`;
+                speakerNameSpan.innerHTML = scene.speaker;
                 dialogueTextSpan.innerHTML = scene.text;
             } else {
                 diaryIndex = 0;
@@ -347,7 +347,7 @@
             
             if (diaryIndex < diaryPages.length) {
                 const page = diaryPages[diaryIndex];
-                speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
+                speakerNameSpan.innerHTML = page.speaker;
                 dialogueTextSpan.innerHTML = page.text;
             } else {
                 startTuningMode();
@@ -363,7 +363,7 @@
             
             if (page24Index < page24Pages.length) {
                 const page = page24Pages[page24Index];
-                speakerNameSpan.innerHTML = `<span>${page.icon}</span> ${page.speaker}`;
+                speakerNameSpan.innerHTML = page.speaker;
                 dialogueTextSpan.innerHTML = page.text;
             } else {
                 isPage24Active = false;
@@ -377,7 +377,7 @@
             clickHint.style.display = 'none';
             progressDiv.style.display = 'block';
             
-            speakerNameSpan.innerHTML = `<span>🎸</span> Настройка думбыры`;
+            speakerNameSpan.innerHTML = `Настройка думбыры`;
             dialogueTextSpan.innerHTML = 'Подстрой каждую струну до нужного тона, ориентируясь на дневник.';
             
             renderTuningPanel();
@@ -452,7 +452,7 @@ function renderTuningPanel() {
             setBackground('diary');
             clickHint.style.display = 'none';
             
-            speakerNameSpan.innerHTML = `<span>🎵</span> Выбор хамака`;
+            speakerNameSpan.innerHTML = `Выбор хамака`;
             dialogueTextSpan.innerHTML = 'Какой напев играл сэсэн каждый вечер, глядя на восток?';
             
             gamePanelDiv.innerHTML = `
