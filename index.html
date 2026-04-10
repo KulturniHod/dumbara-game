@@ -383,57 +383,59 @@
             renderTuningPanel();
         }
 
-        function renderTuningPanel() {
-            let html = `<div class="game-panel"><div class="dumbara-panel">`;
-            for (let i = 0; i < 3; i++) {
-                const tunedClass = state.stringsTuned[i] ? 'string-tuned' : '';
-                html += `
-                    <div class="string-row">
-                        <div><strong>Струна ${i+1}</strong> (${state.stringValues[i]}%)</div>
-                        <div class="string-line ${tunedClass}" id="string-${i}"></div>
-                        <input type="range" class="slider" id="slider-${i}" min="0" max="100" value="${state.stringValues[i]}">
-                        <div style="font-size:12px; color:#ccc;">
-                            ${i === 0 ? 'низкий, упругий' : i === 1 ? 'высокий, звонкий' : 'средний, певучий'}
-                        </div>
-                    </div>
-                `;
-            }
-            html += `<button class="game-button" onclick="finishTuning()">Завершить настройку</button></div></div>`;
-            gamePanelDiv.innerHTML = html;
+function renderTuningPanel() {
+    let html = `<div class="game-panel"><div class="dumbara-panel">`;
+    for (let i = 0; i < 3; i++) {
+        const tunedClass = state.stringsTuned[i] ? 'string-tuned' : '';
+        html += `
+            <div class="string-row">
+                <div class="string-label"><strong>Струна ${i+1}</strong> <span id="percent-${i}">(${state.stringValues[i]}%)</span></div>
+                <div class="string-line ${tunedClass}" id="string-${i}"></div>
+                <input type="range" class="slider" id="slider-${i}" min="0" max="100" value="${state.stringValues[i]}">
+                <div style="font-size:12px; color:#ccc;">
+                    ${i === 0 ? 'низкий, упругий' : i === 1 ? 'высокий, звонкий' : 'средний, певучий'}
+                </div>
+            </div>
+        `;
+    }
+    html += `<button class="game-button" onclick="finishTuning()">Завершить настройку</button></div></div>`;
+    gamePanelDiv.innerHTML = html;
 
-            for (let i = 0; i < 3; i++) {
-                const slider = document.getElementById(`slider-${i}`);
-                if (slider) {
-                    slider.addEventListener('input', (function(idx) {
-                        return function(e) {
-                            const val = parseInt(e.target.value);
-                            state.stringValues[idx] = val;
-                            const diff = Math.abs(val - correctStringValues[idx]);
-                            const wasTuned = state.stringsTuned[idx];
-                            state.stringsTuned[idx] = diff <= 15;
-                            
-                            if (state.stringsTuned[idx]) {
-                                playCorrectSound();
-                            } else {
-                                playWrongSound();
-                            }
-                            
-                            const stringLine = document.getElementById(`string-${idx}`);
-                            if (state.stringsTuned[idx]) stringLine.classList.add('string-tuned');
-                            else stringLine.classList.remove('string-tuned');
-                            
-                            // Обновляем отображение процентов
-                            const stringRow = slider.closest('.string-row');
-                            if (stringRow) {
-                                const strongElem = stringRow.querySelector('strong');
-                                if (strongElem) {
-                                    strongElem.innerHTML = `Струна ${idx+1} (${val}%)`;
-                                }
-                            }
-                            
-                            const tunedCount = state.stringsTuned.filter(Boolean).length;
-                            progressDiv.innerHTML = `Струн настроено: ${tunedCount}/3`;
-                        };
+    for (let i = 0; i < 3; i++) {
+        const slider = document.getElementById(`slider-${i}`);
+        if (slider) {
+            slider.addEventListener('input', (function(idx) {
+                return function(e) {
+                    const val = parseInt(e.target.value);
+                    state.stringValues[idx] = val;
+                    const diff = Math.abs(val - correctStringValues[idx]);
+                    state.stringsTuned[idx] = diff <= 15;
+                    
+                    if (state.stringsTuned[idx]) {
+                        playCorrectSound();
+                    } else {
+                        playWrongSound();
+                    }
+                    
+                    const stringLine = document.getElementById(`string-${idx}`);
+                    if (state.stringsTuned[idx]) stringLine.classList.add('string-tuned');
+                    else stringLine.classList.remove('string-tuned');
+                    
+                    // Обновляем только span с процентами
+                    const percentSpan = document.getElementById(`percent-${idx}`);
+                    if (percentSpan) {
+                        percentSpan.innerHTML = `(${val}%)`;
+                    }
+                    
+                    const tunedCount = state.stringsTuned.filter(Boolean).length;
+                    progressDiv.innerHTML = `Струн настроено: ${tunedCount}/3`;
+                };
+            })(i));
+        }
+    }
+    const tunedCount = state.stringsTuned.filter(Boolean).length;
+    progressDiv.innerHTML = `Струн настроено: ${tunedCount}/3`;
+}
                     })(i));
                 }
             }
