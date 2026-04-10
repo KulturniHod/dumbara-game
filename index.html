@@ -30,19 +30,14 @@
             overflow-y: auto;
         }
 
-        .scene {
-            position: relative;
-            width: 100%;
-            min-height: 100vh;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 20px;
-            cursor: pointer;
-        }
+      .scene {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
 
         .scene.room { background-image: url('https://KulturniHod.github.io/dumbara-game/images/room.jpg'); background-size: cover; }
         .scene.dumbara { background-image: url('https://KulturniHod.github.io/dumbara-game/images/dumbara.png'); background-size: cover; background-color: #2a1a0a; }
@@ -50,18 +45,24 @@
         .scene.chest { background-image: url('https://KulturniHod.github.io/dumbara-game/images/chest_open.jpg'); background-size: cover; }
         .scene.black { background: #0a0a1a; }
 
-        .dialogue-box {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(12px);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 5px solid #d4af37;
-            color: #f0e6d2;
-            font-size: 17px;
-            line-height: 1.5;
-            text-shadow: 1px 1px 2px black;
-        }
+      .dialogue-box {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    padding: 20px;
+    margin: 0 20px;
+    border-left: 5px solid #d4af37;
+    color: #f0e6d2;
+    font-size: 17px;
+    line-height: 1.5;
+    text-shadow: 1px 1px 2px black;
+    /* Центрирование по вертикали */
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+}
 
         .speaker-name {
             color: #d4af37;
